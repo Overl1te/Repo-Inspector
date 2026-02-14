@@ -75,7 +75,7 @@ Example `config.yml`:
 app:
   name: "Repo Inspector"
   logo_path: "/static/logo.png"
-  title_separator: "Р’В·"
+  title_separator: "Р вЂ™Р’В·"
 
 github:
   token: ""
@@ -181,6 +181,9 @@ uvicorn app.main:app --reload
 5. Configure data source for Pages UI in `web/config.js`:
    - `API_BASE: ""` -> read local files from `web/reports/*.json`
    - `API_BASE: "https://<your-vercel-domain>"` -> call live Vercel API
+6. Full static site includes:
+   - `index.html` (report loader + result view)
+   - `generator.html` (SVG/JSON URL builder + preview)
 
 Static page will load reports from:
 - `web/reports/<owner>__<repo>.en.json`

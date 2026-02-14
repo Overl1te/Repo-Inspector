@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repo Inspector - Generator</title>
+  <link rel="icon" type="image/png" href="./logo.png">
+  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body data-page="generator" data-lang="en">
+  <main class="container container-generator">
+    <section class="card span-12 generator-hero">
+      <div id="gen-lang-switch" class="lang-switch lang-en">
+        <a class="link active" href="#" data-lang="en">EN</a>
+        <a class="link" href="#" data-lang="ru">RU</a>
+      </div>
+      <p id="gen-kicker" class="kicker">EMBEDDABLE STATS</p>
+      <h1 id="gen-title">SVG/JSON generator</h1>
+      <p id="gen-subtitle" class="muted">
+        Build URL parameters visually, preview card, and copy URL/Markdown.
+      </p>
+      <a id="gen-back" class="link" href="./index.html">Back to reports</a>
+    </section>
+
+    <section class="card span-4 generator-controls">
+      <h2 id="gen-config-title">Configuration</h2>
+
+      <label id="gen-import-label" for="gen-repo-url">Import by GitHub URL</label>
+      <div class="gen-import-row">
+        <input id="gen-repo-url" type="url" placeholder="https://github.com/owner/repo" autocomplete="off">
+        <button id="gen-import-repo" type="button" class="button secondary">Import</button>
+      </div>
+      <p id="gen-import-error" class="error"></p>
+
+      <label id="gen-owner-label" for="gen-owner">Owner</label>
+      <input id="gen-owner" type="text" value="">
+
+      <label id="gen-repo-label" for="gen-repo">Repository</label>
+      <input id="gen-repo" type="text" value="">
+
+      <label id="gen-kind-label" for="gen-kind">Card type</label>
+      <select id="gen-kind">
+        <option value="repo">Repository stats</option>
+        <option value="quality">Quality stats</option>
+      </select>
+
+      <label id="gen-format-label" for="gen-format">Format</label>
+      <select id="gen-format">
+        <option value="svg">SVG</option>
+        <option value="json">JSON</option>
+      </select>
+
+      <label id="gen-theme-label" for="gen-theme">Theme</label>
+      <select id="gen-theme"></select>
+
+      <label id="gen-locale-label" for="gen-locale">Locale</label>
+      <select id="gen-locale">
+        <option value="en">en</option>
+        <option value="ru">ru</option>
+      </select>
+
+      <label id="gen-title-label" for="gen-custom-title">Custom title</label>
+      <input id="gen-custom-title" type="text" placeholder="Optional title">
+
+      <label id="gen-hide-label" for="gen-hide">Hide flags (comma-separated)</label>
+      <input id="gen-hide" type="text" placeholder="description,languages,footer">
+
+      <label id="gen-width-label" for="gen-width">Card width</label>
+      <input id="gen-width" type="number" min="640" max="1400" value="760">
+
+      <label id="gen-langs-label" for="gen-langs">Languages count (repo card)</label>
+      <input id="gen-langs" type="number" min="1" max="10" value="4">
+
+      <label class="toggle">
+        <input id="gen-animate" type="checkbox" checked>
+        <span id="gen-animate-label">Enable animation</span>
+      </label>
+
+      <label id="gen-animation-label" for="gen-animation">Animation mode</label>
+      <select id="gen-animation">
+        <option value="all">all</option>
+        <option value="soft">soft</option>
+        <option value="bars">bars</option>
+        <option value="ring">ring</option>
+        <option value="none">none</option>
+      </select>
+
+      <label id="gen-duration-label" for="gen-duration">Animation duration (ms)</label>
+      <input id="gen-duration" type="number" min="350" max="7000" value="1400">
+    </section>
+
+    <section class="card span-8 generator-preview">
+      <div class="category-head">
+        <h2 id="gen-preview-title">Preview</h2>
+        <div class="actions">
+          <button id="gen-copy-url" type="button" class="button">Copy URL</button>
+          <button id="gen-copy-md" type="button" class="button secondary">Copy Markdown</button>
+          <a id="gen-open-url" class="button secondary" href="#" target="_blank" rel="noopener">Open URL</a>
+        </div>
+      </div>
+
+      <label id="gen-url-label" for="gen-url">Generated URL</label>
+      <textarea id="gen-url" rows="3" class="generator-textarea"></textarea>
+
+      <label id="gen-md-label" for="gen-md">Markdown embed</label>
+      <textarea id="gen-md" rows="2" class="generator-textarea"></textarea>
+
+      <p id="gen-api-warning" class="error hidden"></p>
+
+      <div id="gen-svg-wrap" class="generator-svg-wrap">
+        <img id="gen-preview-image" alt="Generated preview" loading="lazy">
+      </div>
+      <pre id="gen-preview-json" class="generator-json hidden"></pre>
+    </section>
+  </main>
+  <script src="./config.js"></script>
+  <script src="./generator.js"></script>
+</body>
+</html>

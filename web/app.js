@@ -30,6 +30,7 @@ const I18N = {
     sampledNote: "Line metrics were sampled because repository contains many files.",
     downloadJson: "Download JSON",
     checkAgain: "Check again",
+    openGenerator: "Open SVG/JSON generator",
     showOnlyIssues: "Show only issues",
     recommendations: "Recommendations",
     openActions: "Open Actions workflow",
@@ -69,6 +70,7 @@ const I18N = {
       "\u041c\u0435\u0442\u0440\u0438\u043a\u0438 \u0441\u0442\u0440\u043e\u043a \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u044b \u043f\u043e \u0432\u044b\u0431\u043e\u0440\u043a\u0435 \u0438\u0437-\u0437\u0430 \u0431\u043e\u043b\u044c\u0448\u043e\u0433\u043e \u0447\u0438\u0441\u043b\u0430 \u0444\u0430\u0439\u043b\u043e\u0432.",
     downloadJson: "\u0421\u043a\u0430\u0447\u0430\u0442\u044c JSON",
     checkAgain: "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0437\u0430\u043d\u043e\u0432\u043e",
+    openGenerator: "\u041e\u0442\u043a\u0440\u044b\u0442\u044c SVG/JSON \u0433\u0435\u043d\u0435\u0440\u0430\u0442\u043e\u0440",
     showOnlyIssues: "\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u043e\u0431\u043b\u0435\u043c\u044b",
     recommendations: "\u0420\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0430\u0446\u0438\u0438",
     openActions: "\u041e\u0442\u043a\u0440\u044b\u0442\u044c workflow \u0432 Actions",
@@ -108,6 +110,7 @@ const refs = {
   previewFlowValue: document.getElementById("preview-flow-value"),
   previewApiLabel: document.getElementById("preview-api-label"),
   previewApiValue: document.getElementById("preview-api-value"),
+  openGenerator: document.getElementById("open-generator"),
 };
 
 let lang = "en";
@@ -228,6 +231,7 @@ function applyLangSwitch() {
   refs.previewFlowValue.textContent = tr("flowValue");
   refs.previewApiLabel.textContent = tr("apiLabel");
   refs.previewApiValue.textContent = USE_REMOTE_API ? API_BASE : tr("apiLocal");
+  if (refs.openGenerator) refs.openGenerator.textContent = tr("openGenerator");
   document.title = tr("tab");
 }
 
