@@ -4,6 +4,7 @@ The project reads a public `config.yml` file and maps nested sections
 to a typed `Settings` model.
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,7 @@ class Settings(BaseModel):
 
     app_name: str = "Repo Inspector"
     app_logo_path: str = "/static/logo.png"
-    app_title_separator: str = "В·"
+    app_title_separator: str = "-"
     github_token: str = ""
     github_app_token: str = ""
     database_url: str = "sqlite:///./data/app.db"
@@ -84,6 +85,35 @@ def _extract_nested(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _env_override_map() -> dict[str, Any]:
+    """Read optional runtime overrides from environment variables."""
+
+    return {
+        "app_name": os.getenv("RQI_APP_NAME"),
+        "app_logo_path": os.getenv("RQI_APP_LOGO_PATH"),
+        "app_title_separator": os.getenv("RQI_APP_TITLE_SEPARATOR"),
+        "github_token": os.getenv("RQI_GITHUB_TOKEN"),
+        "github_app_token": os.getenv("RQI_GITHUB_APP_TOKEN"),
+        "github_api_base": os.getenv("RQI_GITHUB_API_BASE"),
+        "database_url": os.getenv("RQI_DATABASE_URL"),
+        "scan_rate_limit_per_minute": _env_int("RQI_SCAN_RATE_LIMIT_PER_MINUTE"),
+        "scan_daily_quota": _env_int("RQI_SCAN_DAILY_QUOTA"),
+        "scan_cache_ttl_seconds": _env_int("RQI_SCAN_CACHE_TTL_SECONDS"),
+        "repo_history_keep": _env_int("RQI_REPO_HISTORY_KEEP"),
+        "stale_active_job_minutes": _env_int("RQI_STALE_ACTIVE_JOB_MINUTES"),
+    }
+
+
+def _env_int(name: str) -> int | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
 @lru_cache
 def get_settings() -> Settings:
     """Return cached settings instance.
@@ -93,4 +123,5 @@ def get_settings() -> Settings:
 
     raw = _read_yaml_config()
     values = {key: value for key, value in _extract_nested(raw).items() if value is not None}
+    values.update({key: value for key, value in _env_override_map().items() if value is not None})
     return Settings(**values)

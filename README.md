@@ -54,6 +54,11 @@ Now project supports:
 
 This is the "GitHub Pages workaround": computation runs in Actions, UI is static.
 
+### Vercel API mode (github-readme-stats style)
+- Deploy FastAPI as serverless API on Vercel.
+- Use `/api?owner=<owner>&repo=<repo>&kind=repo|quality&format=svg|json`.
+- Use GitHub Pages as frontend and call the Vercel API for dynamic cards/data.
+
 ## 2. Configuration (`config.yml`)
 
 Project uses only open YAML config:
@@ -70,7 +75,7 @@ Example `config.yml`:
 app:
   name: "Repo Inspector"
   logo_path: "/static/logo.png"
-  title_separator: "·"
+  title_separator: "Р’В·"
 
 github:
   token: ""
@@ -173,6 +178,9 @@ uvicorn app.main:app --reload
 2. In repo settings go to `Settings -> Pages` and set `Build and deployment` to `GitHub Actions`.
 3. Run workflow `Deploy Pages` once (or push any change into `web/`).
 4. Open the Pages URL from `Settings -> Pages`.
+5. Configure data source for Pages UI in `web/config.js`:
+   - `API_BASE: ""` -> read local files from `web/reports/*.json`
+   - `API_BASE: "https://<your-vercel-domain>"` -> call live Vercel API
 
 Static page will load reports from:
 - `web/reports/<owner>__<repo>.en.json`
@@ -338,5 +346,38 @@ curl "http://127.0.0.1:8000/metrics"
 ```bash
 ruff check .
 pytest -q
+```
+
+## 13. Vercel (API only) + GitHub Pages (UI)
+
+1. Import repository into Vercel.
+2. Keep project root as-is (uses `vercel.json` + `api/index.py`).
+3. Optionally set env vars in Vercel:
+   - `RQI_GITHUB_TOKEN` (recommended for higher GitHub API limits)
+   - `RQI_DATABASE_URL` (default on Vercel is `sqlite:////tmp/repo_inspector.db`)
+4. Deploy and test API endpoints:
+   - `https://<your-vercel-domain>/health`
+   - `https://<your-vercel-domain>/api?owner=Overl1te&repo=CyberDeck&kind=repo`
+   - `https://<your-vercel-domain>/api?owner=Overl1te&repo=CyberDeck&kind=quality`
+   - `https://<your-vercel-domain>/api?owner=Overl1te&repo=CyberDeck&kind=quality&format=json&include_report=true`
+5. Set `API_BASE` in `web/config.js` to your Vercel domain and redeploy Pages.
+
+Recommended architecture:
+- GitHub Pages: UI/visualization layer
+- Vercel: API/SVG/JSON generation layer
+
+## 14. How to use (production)
+
+1. Open your GitHub Pages URL.
+2. Paste repository URL (for example `https://github.com/Overl1te/CyberDeck`).
+3. Click `Load report`.
+4. UI requests live data from Vercel API (`/api?...`) if `API_BASE` is configured.
+5. If `API_BASE` is empty, UI falls back to static reports in `web/reports`.
+
+Quick embed examples (README badges/cards):
+
+```md
+![Repo stats](https://<your-vercel-domain>/api?owner=Overl1te&repo=CyberDeck&kind=repo&theme=ocean&animate=true)
+![Quality score](https://<your-vercel-domain>/api?owner=Overl1te&repo=CyberDeck&kind=quality&theme=midnight&animate=true)
 ```
 

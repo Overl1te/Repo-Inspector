@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -38,6 +39,13 @@ templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version="0.2.0")
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 _RATE_WINDOW_SECONDS = 60
 _scan_requests: dict[str, deque[float]] = defaultdict(deque)
@@ -419,6 +427,78 @@ async def repo_stats_svg(
     return Response(content=svg, media_type="image/svg+xml", headers=headers)
 
 
+@app.get("/api")
+async def readme_stats_api(
+    owner: str | None = None,
+    repo: str | None = None,
+    kind: str = Query(default="repo", pattern="^(repo|quality)$"),
+    format: str = Query(default="svg", pattern="^(svg|json)$"),
+    theme: str = "ocean",
+    locale: str = "en",
+    hide: str | None = None,
+    title: str | None = None,
+    card_width: int = Query(default=760, ge=640, le=1400),
+    langs_count: int = Query(default=4, ge=1, le=10),
+    animate: bool = False,
+    animation: str = "all",
+    duration: int = Query(default=1400, ge=350, le=7000),
+    cache_seconds: int = Query(default=21600, ge=0, le=86400),
+    include_report: bool = False,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Readme-stats style endpoint.
+
+    Examples:
+    - `/api?owner=octocat&repo=Hello-World&kind=repo`
+    - `/api?owner=octocat&repo=Hello-World&kind=quality&format=json`
+    """
+
+    if not owner or not repo:
+        raise HTTPException(status_code=400, detail="Use query params: owner=<owner>&repo=<repo>")
+
+    normalized_locale = normalize_lang(locale)
+    hidden = _parse_csv_flags(hide)
+
+    if format == "json":
+        if kind == "quality":
+            payload = await _build_quality_stats_payload(owner, repo, db, include_report=include_report)
+        else:
+            payload = await _build_public_repo_stats_payload(owner, repo, langs_count=max(1, langs_count))
+        return JSONResponse(payload)
+
+    if kind == "quality":
+        payload = await _build_quality_stats_payload(owner, repo, db, include_report=False)
+        svg = build_quality_stats_svg(
+            payload,
+            theme=theme,
+            custom_theme=None,
+            locale=normalized_locale,
+            card_width=card_width,
+            hide=hidden,
+            title=title,
+            animate=animate,
+            animation=animation,
+            duration_ms=duration,
+        )
+    else:
+        payload = await _build_public_repo_stats_payload(owner, repo, langs_count=max(4, langs_count))
+        svg = build_repo_stats_svg(
+            payload,
+            theme=theme,
+            custom_theme=None,
+            locale=normalized_locale,
+            card_width=card_width,
+            langs_count=langs_count,
+            hide=hidden,
+            title=title,
+            animate=animate,
+            animation=animation,
+            duration_ms=duration,
+        )
+    headers = _svg_cache_headers(cache_seconds)
+    return Response(content=svg, media_type="image/svg+xml", headers=headers)
+
+
 @app.get("/api/stats/quality/{owner}/{repo}.json")
 async def quality_stats_json(
     owner: str,
@@ -753,6 +833,8 @@ async def scan_job_async(job_id: str, github_token: str | None = None) -> None:
 async def _build_combined_stats_payload(owner: str, repo: str, db: Session) -> dict[str, object]:
     repo_payload = await _build_public_repo_stats_payload(owner, repo, langs_count=10)
     quality = _latest_repo_quality_snapshot(db, owner, repo, include_report=False)
+    if quality is None:
+        quality = await _build_live_quality_snapshot(owner, repo, include_report=False)
     payload: dict[str, object] = {
         "generated_at": datetime.now(UTC).isoformat(),
         "repository": repo_payload["repository"],
@@ -798,7 +880,7 @@ async def _build_quality_stats_payload(
 ) -> dict[str, object]:
     quality = _latest_repo_quality_snapshot(db, owner, repo, include_report=include_report)
     if quality is None:
-        raise HTTPException(status_code=404, detail="No quality report found. Run /api/scan first.")
+        quality = await _build_live_quality_snapshot(owner, repo, include_report=include_report)
     return {
         "generated_at": datetime.now(UTC).isoformat(),
         "repository": {
@@ -814,6 +896,69 @@ async def _build_quality_stats_payload(
             "report": quality.get("report_url"),
         },
     }
+
+
+async def _build_live_quality_snapshot(
+    owner: str,
+    repo: str,
+    include_report: bool = False,
+) -> dict[str, object]:
+    """Compute quality snapshot on demand without persisted scan history."""
+
+    client = GitHubClient()
+    try:
+        snapshot = await client.get_repo_snapshot(owner, repo)
+    except GitHubAPIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    policy = load_repo_policy(snapshot)
+    checks = run_all_checks(snapshot, enable_network=True, policy=policy)
+    stacks = detect_stacks(snapshot)
+    metrics = project_line_metrics(snapshot)
+    report = build_report(
+        repo_owner=snapshot.owner,
+        repo_name=snapshot.name,
+        repo_url=snapshot.url,
+        checks_by_category=checks,
+        project_metrics=metrics,
+        detected_stacks=stacks,
+        category_weights=policy.category_weights,
+        commit_sha=snapshot.default_branch_sha,
+        policy_issues=policy.validation_errors,
+    )
+    report_payload = report.model_dump(mode="json")
+    status_counts = {"pass": 0, "warn": 0, "fail": 0}
+    category_scores: list[dict[str, object]] = []
+    for category in report.categories:
+        category_scores.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "score": int(category.score),
+                "weight": int(category.weight),
+            }
+        )
+        for check in category.checks:
+            if check.status in status_counts:
+                status_counts[check.status] += 1
+
+    result: dict[str, object] = {
+        "job_id": None,
+        "commit_sha": snapshot.default_branch_sha,
+        "finished_at": datetime.now(UTC).isoformat(),
+        "score_total": int(report.score_total),
+        "report_url": None,
+        "total_code_lines": int(report.project_metrics.total_code_lines),
+        "total_code_files": int(report.project_metrics.total_code_files),
+        "scanned_code_files": int(report.project_metrics.scanned_code_files),
+        "status_counts": status_counts,
+        "category_scores": category_scores,
+        "detected_stacks": [str(stack) for stack in stacks[:20]],
+        "source": "live",
+    }
+    if include_report:
+        result["report"] = report_payload
+    return result
 
 
 def _serialize_repo_stats(repo_stats: RepoPublicStats) -> dict[str, object]:
