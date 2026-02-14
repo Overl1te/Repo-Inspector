@@ -75,6 +75,25 @@ def test_ci_trigger_warn_without_push_or_pr():
     assert statuses["workflow_trigger"] == "warn"
 
 
+def test_ci_trigger_pass_with_on_key_parsed_as_yaml_bool():
+    snap = snapshot_factory(
+        file_contents={
+            ".github/workflows/ci.yml": (
+                "name: ci\n"
+                "on:\n"
+                "  push:\n"
+                "  pull_request:\n"
+                "jobs: {}\n"
+            )
+        },
+        tree_paths=[".github/workflows/ci.yml"],
+    )
+    checks = ci_checks(snap)
+    statuses = {c.id: c.status for c in checks}
+    assert statuses["workflow_files"] == "pass"
+    assert statuses["workflow_trigger"] == "pass"
+
+
 def test_security_secret_pattern_fail():
     snap = snapshot_factory(file_contents={"README.md": "Token: ghp_abcdefghijklmnopqrstuvwxyz12345"})
     checks = security_checks(snap)
