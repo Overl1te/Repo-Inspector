@@ -201,7 +201,7 @@ def ci_checks(snapshot: Any) -> list[CheckResult]:
                 for doc in yaml.safe_load_all(content):
                     if not isinstance(doc, dict):
                         continue
-                    on_config = doc.get("on")
+                    on_config = _extract_workflow_on_config(doc)
                     if _has_push_or_pr_trigger(on_config):
                         found_trigger = True
                         break
@@ -752,6 +752,24 @@ def _has_push_or_pr_trigger(on_config: Any) -> bool:
     if isinstance(on_config, dict):
         return "push" in on_config or "pull_request" in on_config
     return False
+
+
+def _extract_workflow_on_config(doc: dict[Any, Any]) -> Any:
+    """Extract workflow trigger config from parsed YAML document.
+
+    Notes:
+    - PyYAML may parse the key `on` as boolean `True` (YAML 1.1 behavior).
+    - GitHub Actions treats `on` as a literal key (YAML 1.2 behavior).
+    """
+
+    if "on" in doc:
+        return doc.get("on")
+    if True in doc:
+        return doc.get(True)
+    for key, value in doc.items():
+        if isinstance(key, str) and key.lower() == "on":
+            return value
+    return None
 
 
 def _parse_requirements(content: str) -> set[DependencyRef]:
