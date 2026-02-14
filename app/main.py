@@ -48,8 +48,10 @@ app.add_middleware(
 )
 
 _RATE_WINDOW_SECONDS = 60
+_REPO_STATS_CACHE_TTL_SECONDS = 300
 _scan_requests: dict[str, deque[float]] = defaultdict(deque)
 _scan_daily_usage: dict[str, tuple[date, int]] = {}
+_repo_stats_cache: dict[str, tuple[float, RepoPublicStats]] = {}
 _started_at = time.time()
 _metrics: dict[str, float] = {
     "http_requests_total": 0,
@@ -442,6 +444,22 @@ async def readme_stats_api(
     animate: bool = False,
     animation: str = "all",
     duration: int = Query(default=1400, ge=350, le=7000),
+    bg_start: str | None = Query(default=None),
+    bg_end: str | None = Query(default=None),
+    border: str | None = Query(default=None),
+    panel: str | None = Query(default=None),
+    overlay: str | None = Query(default=None),
+    chip_bg: str | None = Query(default=None),
+    chip_text: str | None = Query(default=None),
+    text: str | None = Query(default=None),
+    muted: str | None = Query(default=None),
+    accent: str | None = Query(default=None),
+    accent_2: str | None = Query(default=None),
+    accent_soft: str | None = Query(default=None),
+    track: str | None = Query(default=None),
+    pass_color: str | None = Query(default=None, alias="pass"),
+    warn: str | None = Query(default=None),
+    fail: str | None = Query(default=None),
     cache_seconds: int = Query(default=21600, ge=0, le=86400),
     include_report: bool = False,
     db: Session = Depends(get_db),
@@ -458,6 +476,26 @@ async def readme_stats_api(
 
     normalized_locale = normalize_lang(locale)
     hidden = _parse_csv_flags(hide)
+    custom_theme = _collect_custom_theme(
+        {
+            "bg_start": bg_start,
+            "bg_end": bg_end,
+            "border": border,
+            "panel": panel,
+            "overlay": overlay,
+            "chip_bg": chip_bg,
+            "chip_text": chip_text,
+            "text": text,
+            "muted": muted,
+            "accent": accent,
+            "accent_2": accent_2,
+            "accent_soft": accent_soft,
+            "track": track,
+            "pass": pass_color,
+            "warn": warn,
+            "fail": fail,
+        }
+    )
 
     if format == "json":
         if kind == "quality":
@@ -472,7 +510,7 @@ async def readme_stats_api(
         svg = build_quality_stats_svg(
             payload,
             theme=theme,
-            custom_theme=None,
+            custom_theme=custom_theme,
             locale=normalized_locale,
             card_width=card_width,
             hide=hidden,
@@ -486,7 +524,7 @@ async def readme_stats_api(
         svg = build_repo_stats_svg(
             payload,
             theme=theme,
-            custom_theme=None,
+            custom_theme=custom_theme,
             locale=normalized_locale,
             card_width=card_width,
             langs_count=langs_count,
@@ -856,10 +894,22 @@ async def _build_combined_stats_payload(owner: str, repo: str, db: Session) -> d
 
 async def _build_public_repo_stats_payload(owner: str, repo: str, langs_count: int = 10) -> dict[str, object]:
     client = GitHubClient()
+    cache_key = f"{owner.strip().lower()}/{repo.strip().lower()}"
+    cached = _repo_stats_cache.get(cache_key)
+    repo_stats: RepoPublicStats | None = None
+    if cached and (time.time() - cached[0]) <= _REPO_STATS_CACHE_TTL_SECONDS:
+        repo_stats = cached[1]
     try:
-        repo_stats = await client.get_repo_public_stats(owner, repo)
+        if repo_stats is None:
+            repo_stats = await client.get_repo_public_stats(owner, repo)
+            _repo_stats_cache[cache_key] = (time.time(), repo_stats)
     except GitHubAPIError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        if cached:
+            repo_stats = cached[1]
+        else:
+            raise _github_error_to_http(exc) from exc
+    if repo_stats is None:
+        raise HTTPException(status_code=500, detail="Failed to build repository stats payload")
 
     repo_data = _serialize_repo_stats(repo_stats)
     languages = repo_data.get("languages")
@@ -912,7 +962,7 @@ async def _build_live_quality_snapshot(
     try:
         snapshot = await client.get_repo_snapshot(owner, repo)
     except GitHubAPIError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise _github_error_to_http(exc) from exc
 
     policy = load_repo_policy(snapshot)
     checks = run_all_checks(snapshot, enable_network=True, policy=policy)
@@ -1087,6 +1137,29 @@ def _parse_csv_flags(value: str | None) -> set[str]:
 
 def _is_github_not_found_error(exc: GitHubAPIError) -> bool:
     return "GitHub API error (404)" in str(exc)
+
+
+def _github_error_to_http(exc: GitHubAPIError) -> HTTPException:
+    """Map GitHub API failures to clearer HTTP responses."""
+
+    message = str(exc)
+    lowered = message.lower()
+    if "rate limit exceeded" in lowered:
+        return HTTPException(
+            status_code=429,
+            detail=(
+                "GitHub API rate limit exceeded. Add `github.token` to `config.yml` "
+                "or set `RQI_GITHUB_TOKEN`, then restart the app."
+            ),
+        )
+    if "(401)" in lowered or "bad credentials" in lowered:
+        return HTTPException(
+            status_code=401,
+            detail="GitHub authentication failed. Check `github.token` in `config.yml`.",
+        )
+    if _is_github_not_found_error(exc):
+        return HTTPException(status_code=404, detail="Repository not found.")
+    return HTTPException(status_code=502, detail=message)
 
 
 def _collect_custom_theme(raw_values: dict[str, str | None]) -> dict[str, str] | None:

@@ -34,6 +34,25 @@ const I18N = {
     copied: "Copied",
     apiMissing: "Set API_BASE in web/config.js to use generator preview on GitHub Pages.",
     failedJson: "Failed to load JSON",
+    customThemeTitle: "Custom theme",
+    customThemeHint: "Set color palette for SVG card manually.",
+    theme_custom: "custom",
+    color_bg_start: "Background start",
+    color_bg_end: "Background end",
+    color_border: "Border",
+    color_panel: "Panel",
+    color_overlay: "Overlay",
+    color_chip_bg: "Chip bg",
+    color_chip_text: "Chip text",
+    color_text: "Text",
+    color_muted: "Muted text",
+    color_accent: "Accent",
+    color_accent_2: "Accent 2",
+    color_accent_soft: "Accent soft",
+    color_track: "Track",
+    color_pass: "Pass",
+    color_warn: "Warn",
+    color_fail: "Fail",
   },
   ru: {
     pageTitle: "Repo Inspector - \u0413\u0435\u043d\u0435\u0440\u0430\u0442\u043e\u0440",
@@ -70,14 +89,68 @@ const I18N = {
     copied: "\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u043e",
     apiMissing: "\u0423\u043a\u0430\u0436\u0438\u0442\u0435 API_BASE \u0432 web/config.js \u0434\u043b\u044f preview \u043d\u0430 GitHub Pages.",
     failedJson: "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c JSON",
+    customThemeTitle: "\u041a\u0430\u0441\u0442\u043e\u043c\u043d\u0430\u044f \u0442\u0435\u043c\u0430",
+    customThemeHint: "\u0412\u0440\u0443\u0447\u043d\u0443\u044e \u0437\u0430\u0434\u0430\u0439\u0442\u0435 \u0446\u0432\u0435\u0442\u0430 \u0434\u043b\u044f SVG-\u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438.",
+    theme_custom: "custom",
+    color_bg_start: "\u0424\u043e\u043d \u0441\u0442\u0430\u0440\u0442",
+    color_bg_end: "\u0424\u043e\u043d \u043a\u043e\u043d\u0435\u0446",
+    color_border: "\u0413\u0440\u0430\u043d\u0438\u0446\u0430",
+    color_panel: "\u041f\u0430\u043d\u0435\u043b\u044c",
+    color_overlay: "Overlay",
+    color_chip_bg: "\u0424\u043e\u043d \u0447\u0438\u043f\u0430",
+    color_chip_text: "\u0422\u0435\u043a\u0441\u0442 \u0447\u0438\u043f\u0430",
+    color_text: "\u0422\u0435\u043a\u0441\u0442",
+    color_muted: "\u0412\u0442\u043e\u0440\u0438\u0447\u043d\u044b\u0439 \u0442\u0435\u043a\u0441\u0442",
+    color_accent: "\u0410\u043a\u0446\u0435\u043d\u0442",
+    color_accent_2: "\u0410\u043a\u0446\u0435\u043d\u0442 2",
+    color_accent_soft: "\u041c\u044f\u0433\u043a\u0438\u0439 \u0430\u043a\u0446\u0435\u043d\u0442",
+    color_track: "\u0422\u0440\u0435\u043a",
+    color_pass: "PASS",
+    color_warn: "WARN",
+    color_fail: "FAIL",
   },
 };
 
-const THEMES = [
-  "ocean", "light", "midnight", "nord", "forest", "sunset", "lavender",
-  "graphite", "mint", "amber", "rose", "slate", "sand", "aurora", "matrix", "mono",
+const THEME_IDS = [
+  "ocean",
+  "light",
+  "midnight",
+  "nord",
+  "forest",
+  "sunset",
+  "lavender",
+  "graphite",
+  "mint",
+  "amber",
+  "rose",
+  "slate",
+  "sand",
+  "aurora",
+  "matrix",
+  "mono",
+  "custom",
 ];
 
+const CUSTOM_THEME_KEYS = [
+  "bg_start",
+  "bg_end",
+  "border",
+  "panel",
+  "overlay",
+  "chip_bg",
+  "chip_text",
+  "text",
+  "muted",
+  "accent",
+  "accent_2",
+  "accent_soft",
+  "track",
+  "pass",
+  "warn",
+  "fail",
+];
+
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const REPO_RE = /^https?:\/\/github\.com\/([^/\s]+)\/([^/\s#]+?)(?:\.git)?\/?$/;
 let lang = "en";
 
@@ -114,10 +187,16 @@ const refs = {
   img: document.getElementById("gen-preview-image"),
   json: document.getElementById("gen-preview-json"),
   apiWarning: document.getElementById("gen-api-warning"),
+  customPanel: document.getElementById("gen-custom-theme-panel"),
 };
 
 function t(key) {
   return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+}
+
+function themeLabel(themeId) {
+  const key = `theme_${themeId}`;
+  return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || themeId;
 }
 
 function normalizeApiBase(raw) {
@@ -137,17 +216,49 @@ function getApiBase() {
 
 const API_BASE = getApiBase();
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function normalizeHexColor(value) {
+  const raw = String(value || "").trim();
+  if (!HEX_COLOR_RE.test(raw)) return null;
+  if (raw.length === 4) {
+    return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toUpperCase();
+  }
+  return raw.toUpperCase();
+}
+
+function parseRepoRef(url) {
+  const match = REPO_RE.exec(String(url || "").trim());
+  if (!match) return null;
+  return { owner: match[1], repo: match[2] };
 }
 
 function fillThemes() {
-  refs.theme.innerHTML = THEMES.map((theme) => `<option value="${theme}">${theme}</option>`).join("");
+  if (!refs.theme) return;
+  const selected = refs.theme.value;
+  refs.theme.innerHTML = THEME_IDS.map((theme) => {
+    const label = themeLabel(theme);
+    return `<option value="${theme}">${label}</option>`;
+  }).join("");
+  refs.theme.value = THEME_IDS.includes(selected) ? selected : "ocean";
+}
+
+function syncCustomThemePanelVisibility() {
+  if (!refs.customPanel || !refs.theme || !refs.format) return;
+  const show = refs.theme.value === "custom" && refs.format.value === "svg";
+  refs.customPanel.classList.toggle("hidden", !show);
+  CUSTOM_THEME_KEYS.forEach((key) => {
+    const node = document.getElementById(`gen-color-${key}`);
+    if (node) node.disabled = !show;
+  });
+}
+
+function customThemeParams() {
+  const result = {};
+  CUSTOM_THEME_KEYS.forEach((key) => {
+    const node = document.getElementById(`gen-color-${key}`);
+    const value = normalizeHexColor(node?.value || "");
+    if (value) result[key] = value;
+  });
+  return result;
 }
 
 function applyI18n() {
@@ -183,18 +294,23 @@ function applyI18n() {
   document.getElementById("gen-url-label").textContent = t("generatedUrl");
   document.getElementById("gen-md-label").textContent = t("markdown");
 
+  const customTitle = document.getElementById("gen-custom-theme-title");
+  if (customTitle) customTitle.textContent = t("customThemeTitle");
+  const customHint = document.getElementById("gen-custom-theme-hint");
+  if (customHint) customHint.textContent = t("customThemeHint");
+  CUSTOM_THEME_KEYS.forEach((key) => {
+    const label = document.getElementById(`gen-color-label-${key}`);
+    if (label) label.textContent = t(`color_${key}`) || key;
+  });
+
   refs.body.dataset.lang = lang;
   refs.langSwitch.classList.toggle("lang-ru", lang === "ru");
   refs.langSwitch.classList.toggle("lang-en", lang === "en");
   refs.langSwitch.querySelectorAll(".link").forEach((node) => {
     node.classList.toggle("active", node.dataset.lang === lang);
   });
-}
 
-function parseRepoRef(url) {
-  const match = REPO_RE.exec(String(url || "").trim());
-  if (!match) return null;
-  return { owner: match[1], repo: match[2] };
+  fillThemes();
 }
 
 function buildApiUrl() {
@@ -219,6 +335,12 @@ function buildApiUrl() {
   if (hide) params.set("hide", hide);
   if (refs.format.value === "json" && refs.kind.value === "quality") {
     params.set("include_report", "true");
+  }
+  if (refs.format.value === "svg" && refs.theme.value === "custom") {
+    const custom = customThemeParams();
+    Object.entries(custom).forEach(([key, value]) => {
+      params.set(key, value);
+    });
   }
   return `${API_BASE}/api?${params.toString()}`;
 }
@@ -291,6 +413,23 @@ function bindEvents() {
     node.addEventListener("change", () => void refreshPreview());
   });
 
+  CUSTOM_THEME_KEYS.forEach((key) => {
+    const node = document.getElementById(`gen-color-${key}`);
+    if (!node) return;
+    node.addEventListener("input", () => void refreshPreview());
+    node.addEventListener("change", () => void refreshPreview());
+  });
+
+  refs.theme.addEventListener("change", () => {
+    syncCustomThemePanelVisibility();
+    void refreshPreview();
+  });
+
+  refs.format.addEventListener("change", () => {
+    syncCustomThemePanelVisibility();
+    void refreshPreview();
+  });
+
   refs.importBtn.addEventListener("click", () => {
     const parsed = parseRepoRef(refs.repoUrl.value);
     if (!parsed) {
@@ -338,6 +477,7 @@ function bindEvents() {
         refs.locale.value = lang;
       }
       applyI18n();
+      syncCustomThemePanelVisibility();
       void refreshPreview();
     });
   });
@@ -346,5 +486,6 @@ function bindEvents() {
 fillThemes();
 if (refs.locale) refs.locale.value = lang;
 applyI18n();
+syncCustomThemePanelVisibility();
 bindEvents();
 void refreshPreview();

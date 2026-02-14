@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src='./logo.png' width='400px' height='400px'/>
+
 # Repo Inspector — проверка GitHub-репозиториев через API
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
@@ -45,6 +47,12 @@
 ### Repository stats card
 
 ![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=repo&format=svg&theme=midnight&locale=ru&card_width=760&animate=true&animation=all&duration=1400&langs_count=4)
+
+### Кастомная тема (пример)
+
+```md
+![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=quality&format=svg&theme=custom&locale=ru&card_width=760&animate=true&animation=all&duration=1400&bg_start=%23F8FBFF&bg_end=%23EEF5FF&border=%23A8CBFF&panel=%23FFFFFF&overlay=%23EDF4FF&chip_bg=%23E7F0FF&chip_text=%232D4E83&text=%2314284B&muted=%233F6191&accent=%2316A4E0&accent_2=%231AB9A2&accent_soft=%23B8DBFF&track=%23D3E3FB&pass=%230F7F39&warn=%23B55A0C&fail=%23BE1D2D)
+```
 
 ---
 
