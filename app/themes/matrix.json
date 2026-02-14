@@ -1,0 +1,26 @@
+{
+  "id": "matrix",
+  "order": 160,
+  "label": {
+    "en": "Matrix",
+    "ru": "???????"
+  },
+  "palette": {
+    "bg_start": "#0F1B0F",
+    "bg_end": "#142414",
+    "border": "#2F5D33",
+    "panel": "#162616",
+    "overlay": "#112111",
+    "chip_bg": "#1C3420",
+    "chip_text": "#A7F3D0",
+    "text": "#DDFBE8",
+    "muted": "#9EC7B0",
+    "accent": "#22C55E",
+    "accent_2": "#16A34A",
+    "accent_soft": "#23492A",
+    "track": "#27402C",
+    "pass": "#4ADE80",
+    "warn": "#FACC15",
+    "fail": "#FCA5A5"
+  }
+}

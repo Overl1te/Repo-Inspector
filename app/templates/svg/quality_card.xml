@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="{{ card_width }}" height="{{ card_height }}" viewBox="0 0 {{ card_width }} {{ card_height }}" role="img" aria-label="{{ quality_card_aria }}">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="{{ bg_start }}" />
+      <stop offset="100%" stop-color="{{ bg_end }}" />
+    </linearGradient>
+    <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="{{ accent }}" />
+      <stop offset="100%" stop-color="{{ accent_2 }}" />
+    </linearGradient>
+  </defs>
+  {{ style_block }}
+  <rect x="2" y="2" width="{{ card_width - 4 }}" height="{{ card_height - 4 }}" rx="18" fill="url(#bg-grad)" stroke="{{ border }}" stroke-width="1.2" />
+  <text x="30" y="40" class="title">{{ title_text }}</text>
+  <text x="30" y="62" class="subtitle">{{ quality_subtitle }}</text>
+  <rect x="{{ left_x }}" y="{{ left_y }}" width="{{ left_w }}" height="{{ left_h }}" rx="14" fill="{{ overlay }}" />
+  {{ status_svg }}
+  {{ detail_svg }}
+  {{ category_svg }}
+  {{ ring_svg }}
+</svg>

@@ -1,0 +1,257 @@
+﻿<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ report.repo_owner }}/{{ report.repo_name }} | {{ report.score_total }}/100 | {{ ui.report_title }} | {{ site.app_name }}</title>
+  <link rel="icon" type="image/png" href="{{ site.logo_path }}">
+  <link rel="apple-touch-icon" href="{{ site.logo_path }}">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body
+  data-page="report"
+  data-lang="{{ lang }}"
+  data-last-score-label="{{ ui.last_score }}"
+  data-job-id="{{ job.id }}"
+  data-repo-owner="{{ report.repo_owner }}"
+  data-repo-name="{{ report.repo_name }}"
+>
+  <main class="container container-report">
+    <section class="card report-top span-12">
+      <div class="lang-switch lang-{{ lang }}">
+        <a class="link {% if lang == 'en' %}active{% endif %}" href="/report/{{ job.id }}?lang=en">EN</a>
+        <a class="link {% if lang == 'ru' %}active{% endif %}" href="/report/{{ job.id }}?lang=ru">RU</a>
+      </div>
+      <div class="report-summary-grid">
+        <div>
+          <p class="kicker">{{ ui.report_title }}</p>
+          <h1>{{ ui.report_repo }}: <a class="link" href="{{ report.repo_url }}" target="_blank" rel="noopener">{{ report.repo_url }}</a></h1>
+          <div class="status-overview">
+            <span class="status-chip pass"><strong id="pass-count">0</strong> {{ ui.pass_count }}</span>
+            <span class="status-chip warn"><strong id="warn-count">0</strong> {{ ui.warn_count }}</span>
+            <span class="status-chip fail"><strong id="fail-count">0</strong> {{ ui.fail_count }}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span class="metric-title">{{ ui.code_lines }}</span>
+              <span class="metric-value">{{ report.project_metrics.total_code_lines }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-title">{{ ui.code_files }}</span>
+              <span class="metric-value">{{ report.project_metrics.total_code_files }}</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-title">{{ ui.scanned }}</span>
+              <span class="metric-value">{{ report.project_metrics.scanned_code_files }}</span>
+            </div>
+          </div>
+          {% if report.project_metrics.sampled %}
+          <p class="muted">{{ ui.sampled_note }}</p>
+          {% endif %}
+          <div class="pill-row">
+            {% for stack in report.detected_stacks %}
+            <span class="pill">{{ stack }}</span>
+            {% endfor %}
+          </div>
+          <div class="actions">
+            <a class="button secondary" href="/api/report/{{ job.id }}.json?lang={{ lang }}" download>{{ ui.download_json }}</a>
+            <a class="button secondary" href="/api/report/{{ job.id }}.md?lang={{ lang }}" download>{{ ui.download_md }}</a>
+            <a class="button secondary" href="/api/report/{{ job.id }}.txt?lang={{ lang }}" download>{{ ui.download_txt }}</a>
+            <a class="button" href="/?lang={{ lang }}">{{ ui.check_again }}</a>
+          </div>
+          <label class="toggle">
+            <input id="issues-only" type="checkbox">
+            {{ ui.show_only_issues }}
+          </label>
+        </div>
+        <aside class="score-panel">
+          <div class="score-dial" data-score-target="{{ report.score_total }}" style="--score: 0">
+            <div class="score-dial-inner">
+              <span class="score-number" data-score-target="{{ report.score_total }}">0</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <p class="score-label">{{ ui.total_score }}</p>
+        </aside>
+      </div>
+    </section>
+
+    {% if report.comparison %}
+    <section class="card comparison-card span-6">
+      <div class="category-head">
+        <h2>{{ ui.comparison_title }}</h2>
+        <span class="category-score">{{ report.comparison.score_delta }}</span>
+      </div>
+      <div class="comparison-grid">
+        <div class="metric-card">
+          <span class="metric-title">{{ ui.score_delta }}</span>
+          <span class="metric-value">{{ report.comparison.score_delta }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">{{ ui.previous_commit }}</span>
+          <span class="metric-value">{{ (report.comparison.previous_commit_sha or ui.na)[:7] }}</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-title">{{ ui.current_commit }}</span>
+          <span class="metric-value">{{ (report.comparison.current_commit_sha or ui.na)[:7] }}</span>
+        </div>
+      </div>
+      {% if report.comparison.changed_files %}
+      <h3>{{ ui.changed_files }} ({{ report.comparison.changed_files_total }})</h3>
+      <ul class="checks">
+        {% for file in report.comparison.changed_files[:20] %}
+        <li class="check-item"><span class="pill">{{ file }}</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if report.comparison.checks %}
+      <h3>{{ ui.changed_checks }}</h3>
+      <ul class="checks">
+        {% for item in report.comparison.checks[:15] %}
+        <li class="check-item">
+          <span class="badge {% if item.score_delta < 0 %}fail{% elif item.score_delta > 0 %}pass{% else %}warn{% endif %}">
+            {{ item.score_delta }}
+          </span>
+          <div>
+            <p class="check-name">{{ item.check_name }}</p>
+            <p class="muted">
+              {% if item.previous_status == 'pass' %}{{ ui.status_pass_badge }}{% elif item.previous_status == 'warn' %}{{ ui.status_warn_badge }}{% elif item.previous_status == 'fail' %}{{ ui.status_fail_badge }}{% else %}{{ ui.na }}{% endif %}
+              ->
+              {% if item.current_status == 'pass' %}{{ ui.status_pass_badge }}{% elif item.current_status == 'warn' %}{{ ui.status_warn_badge }}{% elif item.current_status == 'fail' %}{{ ui.status_fail_badge }}{% else %}{{ item.current_status }}{% endif %}
+            </p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card trend-card span-6">
+      <div class="category-head">
+        <h2>{{ ui.trend }}</h2>
+      </div>
+      <script id="history-data" type="application/json">{{ history_json|safe }}</script>
+      <div id="trend-chart" class="trend-chart"></div>
+      <p id="trend-fallback" class="muted hidden">{{ ui.no_trend }}</p>
+    </section>
+
+    <section class="card api-card span-6">
+      <div class="category-head">
+        <h2>{{ ui.api_endpoints }}</h2>
+      </div>
+      <div id="api-endpoints" class="api-list"></div>
+    </section>
+
+    {% if history %}
+    <section class="card history-card span-6">
+      <div class="category-head">
+        <h2>{{ ui.history_title }}</h2>
+      </div>
+      <div class="history-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>{{ ui.history_time }}</th>
+              <th>{{ ui.history_commit }}</th>
+              <th>{{ ui.history_score }}</th>
+              <th>{{ ui.history_delta }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in history|reverse %}
+            <tr>
+              <td>{{ item.created_at }}</td>
+              <td><code>{{ item.commit_short }}</code></td>
+              <td>{{ item.score_total }}</td>
+              <td>{{ item.delta }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if report.project_metrics.by_extension %}
+    <section class="card lines-card span-6">
+      <div class="category-head">
+        <h2>{{ ui.code_lines }}</h2>
+      </div>
+      <ul class="checks">
+        {% for item in report.project_metrics.by_extension %}
+        <li class="check-item">
+          <span class="pill">{{ item.extension }}</span>
+          <div>
+            <p class="check-name">{{ item.lines }} {{ ui.lines_word }}</p>
+            <p class="muted">{{ item.files }} {{ ui.files_word }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if report.fix_plan %}
+    <section class="card fix-plan-card span-12">
+      <div class="category-head">
+        <h2>{{ ui.fix_plan }}</h2>
+      </div>
+      <ul class="checks">
+        {% for item in report.fix_plan %}
+        <li class="check-item">
+          <span class="badge {{ item.status }}">
+            {% if item.status == 'pass' %}{{ ui.status_pass_badge }}{% elif item.status == 'warn' %}{{ ui.status_warn_badge }}{% elif item.status == 'fail' %}{{ ui.status_fail_badge }}{% else %}{{ item.status }}{% endif %}
+          </span>
+          <div>
+            <p class="check-name">{{ item.check_name }}</p>
+            <p class="muted">{{ item.action }}</p>
+            <p class="impact">{{ ui.impact }}: +{{ item.impact_points }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% for category in report.categories %}
+    <section class="card category-card span-6">
+      <div class="category-head">
+        <h2>{{ category.name }}</h2>
+        <span class="category-score">{{ category.score }}/{{ category.weight }}</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width: {{ ((category.score / category.weight) * 100) | round(0) }}%">
+          {{ ((category.score / category.weight) * 100) | round(0) }}%
+        </div>
+      </div>
+
+      <ul class="checks">
+        {% for check in category.checks %}
+        <li class="check-item" data-status="{{ check.status }}">
+          <span class="badge {{ check.status }}">
+            {% if check.status == 'pass' %}{{ ui.status_pass_badge }}{% elif check.status == 'warn' %}{{ ui.status_warn_badge }}{% elif check.status == 'fail' %}{{ ui.status_fail_badge }}{% else %}{{ check.status|upper }}{% endif %}
+          </span>
+          <div>
+            <p class="check-name">{{ check.name }}</p>
+            <p class="muted">{{ check.details }}</p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if category.recommendations %}
+      <h3>{{ ui.recommendations }}</h3>
+      <ul class="recommendations">
+        {% for recommendation in category.recommendations %}
+        <li>{{ recommendation }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </main>
+  <script id="i18n-client" type="application/json">{{ client_i18n|tojson }}</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

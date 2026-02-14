@@ -1,0 +1,26 @@
+{
+  "id": "sunset",
+  "order": 40,
+  "label": {
+    "en": "Sunset",
+    "ru": "?????"
+  },
+  "palette": {
+    "bg_start": "#FFF7ED",
+    "bg_end": "#FFE7D1",
+    "border": "#FDBA74",
+    "panel": "#FFFAF3",
+    "overlay": "#FFF1E2",
+    "chip_bg": "#FFE7CC",
+    "chip_text": "#7C3E11",
+    "text": "#3C1F0F",
+    "muted": "#8A4D28",
+    "accent": "#F97316",
+    "accent_2": "#EF4444",
+    "accent_soft": "#FDCF9F",
+    "track": "#F3D7BB",
+    "pass": "#0F8A42",
+    "warn": "#B45309",
+    "fail": "#B91C1C"
+  }
+}

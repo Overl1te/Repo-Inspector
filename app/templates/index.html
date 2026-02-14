@@ -1,0 +1,78 @@
+﻿<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site.app_name }} {{ site.title_separator }} {{ ui.index_page_suffix }}</title>
+  <link rel="icon" type="image/png" href="{{ site.logo_path }}">
+  <link rel="apple-touch-icon" href="{{ site.logo_path }}">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-page="index" data-lang="{{ lang }}">
+  <main class="container container-home">
+    <section class="card hero-card span-12">
+      <div class="lang-switch lang-{{ lang }}">
+        <a class="link {% if lang == 'en' %}active{% endif %}" href="/?lang=en">EN</a>
+        <a class="link {% if lang == 'ru' %}active{% endif %}" href="/?lang=ru">RU</a>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker">{{ ui.hero_kicker }}</p>
+          <h1>{{ site.app_name }}</h1>
+          <p class="muted lead">{{ ui.index_subtitle }}</p>
+          <form id="scan-form" class="scan-form">
+            <label for="repo_url">{{ ui.input_label }}</label>
+            <input
+              type="url"
+              id="repo_url"
+              name="repo_url"
+              placeholder="https://github.com/owner/repo"
+              required
+              pattern="https://github\.com/.+/.+"
+            >
+            <div id="token-panel" class="token-panel hidden">
+              <label for="github_token">{{ ui.private_token_label }}</label>
+              <input
+                type="password"
+                id="github_token"
+                name="github_token"
+                placeholder="{{ ui.private_token_placeholder }}"
+                autocomplete="off"
+              >
+              <p class="muted token-hint">{{ ui.private_token_hint }}</p>
+            </div>
+            <button type="submit">{{ ui.btn_check }}</button>
+          </form>
+          <p id="form-error" class="error"></p>
+          <a class="link" href="/generator?lang={{ lang }}">{{ ui.open_generator }}</a>
+        </div>
+        <aside class="hero-side">
+          <div class="preview-card">
+            <span>{{ ui.total_score }}</span>
+            <strong>0-100</strong>
+          </div>
+          <div class="preview-card">
+            <span>{{ ui.trend }}</span>
+            <strong>{{ ui.preview_commit_timeline }}</strong>
+          </div>
+          <div class="preview-card">
+            <span>{{ ui.download_json }}</span>
+            <strong>{{ ui.preview_downloads }}</strong>
+          </div>
+          <div class="chip-cloud">
+            <span class="info-chip">{{ ui.category_docs }}</span>
+            <span class="info-chip">{{ ui.category_ci }}</span>
+            <span class="info-chip">{{ ui.category_security }}</span>
+            <span class="info-chip">{{ ui.category_quality }}</span>
+            <span class="info-chip">{{ ui.category_maintenance }}</span>
+            <span class="info-chip">{{ ui.category_governance }}</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <script id="i18n-client" type="application/json">{{ client_i18n|tojson }}</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

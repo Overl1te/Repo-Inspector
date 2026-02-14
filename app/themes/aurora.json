@@ -1,0 +1,26 @@
+{
+  "id": "aurora",
+  "order": 140,
+  "label": {
+    "en": "Aurora",
+    "ru": "??????"
+  },
+  "palette": {
+    "bg_start": "#EEFDF8",
+    "bg_end": "#E6F6FF",
+    "border": "#86EFAC",
+    "panel": "#F8FFFD",
+    "overlay": "#E7FBF5",
+    "chip_bg": "#D6F8EA",
+    "chip_text": "#16624E",
+    "text": "#16354A",
+    "muted": "#3F5F74",
+    "accent": "#06B6D4",
+    "accent_2": "#22C55E",
+    "accent_soft": "#A7E8DD",
+    "track": "#C8E8E1",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#BE123C"
+  }
+}

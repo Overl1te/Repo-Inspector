@@ -1,0 +1,26 @@
+{
+  "id": "amber",
+  "order": 90,
+  "label": {
+    "en": "Amber",
+    "ru": "??????"
+  },
+  "palette": {
+    "bg_start": "#FFF9EB",
+    "bg_end": "#FFF0CC",
+    "border": "#FCD34D",
+    "panel": "#FFFDF5",
+    "overlay": "#FFF4DC",
+    "chip_bg": "#FFECBF",
+    "chip_text": "#7C4A03",
+    "text": "#422006",
+    "muted": "#7C5A1F",
+    "accent": "#F59E0B",
+    "accent_2": "#F97316",
+    "accent_soft": "#F8D27E",
+    "track": "#F3DFB5",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#B91C1C"
+  }
+}

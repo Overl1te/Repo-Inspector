@@ -1,0 +1,26 @@
+{
+  "id": "sand",
+  "order": 150,
+  "label": {
+    "en": "Sand",
+    "ru": "?????"
+  },
+  "palette": {
+    "bg_start": "#FFFBF0",
+    "bg_end": "#F8EFD8",
+    "border": "#E7CF9A",
+    "panel": "#FFFDF7",
+    "overlay": "#F8F1DF",
+    "chip_bg": "#F4E6C5",
+    "chip_text": "#6A4A14",
+    "text": "#3F2D12",
+    "muted": "#6F5430",
+    "accent": "#D97706",
+    "accent_2": "#CA8A04",
+    "accent_soft": "#E4C68A",
+    "track": "#E8D9BC",
+    "pass": "#15803D",
+    "warn": "#9A3412",
+    "fail": "#B91C1C"
+  }
+}

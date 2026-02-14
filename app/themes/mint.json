@@ -1,0 +1,26 @@
+{
+  "id": "mint",
+  "order": 110,
+  "label": {
+    "en": "Mint",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#ECFEFF",
+    "bg_end": "#DFFCF6",
+    "border": "#99F6E4",
+    "panel": "#F5FFFD",
+    "overlay": "#E7FBF7",
+    "chip_bg": "#D4F8EE",
+    "chip_text": "#0F5E59",
+    "text": "#133336",
+    "muted": "#2D666B",
+    "accent": "#14B8A6",
+    "accent_2": "#06B6D4",
+    "accent_soft": "#9AE7DC",
+    "track": "#C8ECE6",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#BE123C"
+  }
+}

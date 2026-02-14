@@ -1,0 +1,26 @@
+{
+  "id": "mono",
+  "order": 130,
+  "label": {
+    "en": "Mono",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#FAFAFA",
+    "bg_end": "#F0F0F0",
+    "border": "#C4C4C4",
+    "panel": "#FFFFFF",
+    "overlay": "#F5F5F5",
+    "chip_bg": "#ECECEC",
+    "chip_text": "#3F3F46",
+    "text": "#18181B",
+    "muted": "#52525B",
+    "accent": "#52525B",
+    "accent_2": "#71717A",
+    "accent_soft": "#D4D4D8",
+    "track": "#E4E4E7",
+    "pass": "#166534",
+    "warn": "#92400E",
+    "fail": "#991B1B"
+  }
+}

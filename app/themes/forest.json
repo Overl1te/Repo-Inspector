@@ -1,0 +1,26 @@
+{
+  "id": "forest",
+  "order": 50,
+  "label": {
+    "en": "Forest",
+    "ru": "???"
+  },
+  "palette": {
+    "bg_start": "#EFFAF2",
+    "bg_end": "#E0F5E7",
+    "border": "#8ED9AB",
+    "panel": "#F6FFF8",
+    "overlay": "#E8F7EC",
+    "chip_bg": "#DDF2E4",
+    "chip_text": "#1F5530",
+    "text": "#153424",
+    "muted": "#3B6B50",
+    "accent": "#16A34A",
+    "accent_2": "#22C55E",
+    "accent_soft": "#9FD8B2",
+    "track": "#C9E7D2",
+    "pass": "#0F8A42",
+    "warn": "#B45309",
+    "fail": "#BE123C"
+  }
+}

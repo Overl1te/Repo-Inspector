@@ -1,0 +1,258 @@
+﻿<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ ui.gen_page_title }} | {{ site.app_name }}</title>
+  <link rel="icon" type="image/png" href="{{ site.logo_path }}">
+  <link rel="apple-touch-icon" href="{{ site.logo_path }}">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-page="generator" data-lang="{{ lang }}">
+  <main class="container container-generator">
+    <section class="card span-12 generator-hero">
+      <div class="lang-switch lang-{{ lang }}">
+        <a class="link {% if lang == 'en' %}active{% endif %}" href="/generator?lang=en">EN</a>
+        <a class="link {% if lang == 'ru' %}active{% endif %}" href="/generator?lang=ru">RU</a>
+      </div>
+      <p class="kicker">{{ ui.gen_kicker }}</p>
+      <h1>{{ ui.gen_title }}</h1>
+      <p class="muted">{{ ui.gen_subtitle }}</p>
+      <a class="link" href="/?lang={{ lang }}">{{ ui.gen_back }}</a>
+    </section>
+
+    <section class="card span-4 generator-controls">
+      <h2>{{ ui.gen_config }}</h2>
+      <label for="gen-repo-url">{{ ui.gen_import_url }}</label>
+      <div class="gen-import-row">
+        <input
+          id="gen-repo-url"
+          type="url"
+          placeholder="{{ ui.gen_import_placeholder }}"
+          autocomplete="off"
+        >
+        <button id="gen-import-repo" type="button" class="button secondary">{{ ui.gen_import_apply }}</button>
+      </div>
+      <p id="gen-import-error" class="error"></p>
+
+      <label for="gen-owner">{{ ui.gen_owner }}</label>
+      <input id="gen-owner" type="text" value="">
+
+      <label for="gen-repo">{{ ui.gen_repo }}</label>
+      <input id="gen-repo" type="text" value="">
+
+      <label for="gen-kind">{{ ui.gen_card_type }}</label>
+      <select id="gen-kind">
+        <option value="repo">{{ ui.gen_type_repo }}</option>
+        <option value="quality">{{ ui.gen_type_quality }}</option>
+      </select>
+
+      <label for="gen-format">{{ ui.gen_format }}</label>
+      <select id="gen-format">
+        <option value="svg">SVG</option>
+        <option value="json">JSON</option>
+      </select>
+
+      <label for="gen-theme">{{ ui.gen_theme }}</label>
+      <select id="gen-theme">
+        {% for theme in themes %}
+        <option value="{{ theme.id }}">{{ theme.label }}</option>
+        {% endfor %}
+      </select>
+
+      <section id="gen-custom-theme-panel" class="custom-theme-panel hidden">
+        <h3>{{ ui.gen_custom_theme_title }}</h3>
+        <p class="muted custom-theme-hint">{{ ui.gen_custom_theme_hint }}</p>
+        <div class="custom-theme-grid">
+          <div class="custom-color-field">
+            <label for="gen-color-bg_start">{{ ui.gen_color_bg_start }}</label>
+            <input id="gen-color-bg_start" type="color" value="{{ custom_theme_defaults.bg_start }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-bg_end">{{ ui.gen_color_bg_end }}</label>
+            <input id="gen-color-bg_end" type="color" value="{{ custom_theme_defaults.bg_end }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-border">{{ ui.gen_color_border }}</label>
+            <input id="gen-color-border" type="color" value="{{ custom_theme_defaults.border }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-panel">{{ ui.gen_color_panel }}</label>
+            <input id="gen-color-panel" type="color" value="{{ custom_theme_defaults.panel }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-overlay">{{ ui.gen_color_overlay }}</label>
+            <input id="gen-color-overlay" type="color" value="{{ custom_theme_defaults.overlay }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-chip_bg">{{ ui.gen_color_chip_bg }}</label>
+            <input id="gen-color-chip_bg" type="color" value="{{ custom_theme_defaults.chip_bg }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-chip_text">{{ ui.gen_color_chip_text }}</label>
+            <input id="gen-color-chip_text" type="color" value="{{ custom_theme_defaults.chip_text }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-text">{{ ui.gen_color_text }}</label>
+            <input id="gen-color-text" type="color" value="{{ custom_theme_defaults.text }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-muted">{{ ui.gen_color_muted }}</label>
+            <input id="gen-color-muted" type="color" value="{{ custom_theme_defaults.muted }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-accent">{{ ui.gen_color_accent }}</label>
+            <input id="gen-color-accent" type="color" value="{{ custom_theme_defaults.accent }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-accent_2">{{ ui.gen_color_accent_2 }}</label>
+            <input id="gen-color-accent_2" type="color" value="{{ custom_theme_defaults.accent_2 }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-accent_soft">{{ ui.gen_color_accent_soft }}</label>
+            <input id="gen-color-accent_soft" type="color" value="{{ custom_theme_defaults.accent_soft }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-track">{{ ui.gen_color_track }}</label>
+            <input id="gen-color-track" type="color" value="{{ custom_theme_defaults.track }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-pass">{{ ui.gen_color_pass }}</label>
+            <input id="gen-color-pass" type="color" value="{{ custom_theme_defaults.pass }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-warn">{{ ui.gen_color_warn }}</label>
+            <input id="gen-color-warn" type="color" value="{{ custom_theme_defaults.warn }}">
+          </div>
+          <div class="custom-color-field">
+            <label for="gen-color-fail">{{ ui.gen_color_fail }}</label>
+            <input id="gen-color-fail" type="color" value="{{ custom_theme_defaults.fail }}">
+          </div>
+        </div>
+      </section>
+
+      <label for="gen-locale">{{ ui.gen_locale }}</label>
+      <select id="gen-locale">
+        <option value="en">en</option>
+        <option value="ru">ru</option>
+      </select>
+
+      <label for="gen-title">{{ ui.gen_custom_title }}</label>
+      <input id="gen-title" type="text" placeholder="{{ ui.gen_optional_title }}">
+
+      <label for="gen-hide-panel">{{ ui.gen_hide_flags }}</label>
+      <details id="gen-hide-panel" class="multi-select">
+        <summary class="multi-select-summary">
+          <span id="gen-hide-summary-text">{{ ui.gen_hide_none }}</span>
+        </summary>
+        <div class="multi-select-list">
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="description" data-kinds="repo">
+            {{ ui.gen_hide_description }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="languages" data-kinds="repo">
+            {{ ui.gen_hide_languages }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="meta" data-kinds="repo">
+            {{ ui.gen_hide_meta }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="stars" data-kinds="repo">
+            {{ ui.gen_hide_stars }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="forks" data-kinds="repo">
+            {{ ui.gen_hide_forks }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="issues" data-kinds="repo">
+            {{ ui.gen_hide_issues }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="watchers" data-kinds="repo">
+            {{ ui.gen_hide_watchers }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="status" data-kinds="quality">
+            {{ ui.gen_hide_status }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="lines" data-kinds="quality">
+            {{ ui.gen_hide_lines }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="stacks" data-kinds="quality">
+            {{ ui.gen_hide_stacks }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="commit" data-kinds="quality">
+            {{ ui.gen_hide_commit }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="categories" data-kinds="quality">
+            {{ ui.gen_hide_categories }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="ring" data-kinds="quality">
+            {{ ui.gen_hide_ring }}
+          </label>
+          <label class="multi-select-option">
+            <input class="gen-hide-option" type="checkbox" value="footer" data-kinds="repo,quality">
+            {{ ui.gen_hide_footer }}
+          </label>
+        </div>
+      </details>
+      <input id="gen-hide" type="hidden" value="">
+
+      <label for="gen-width">{{ ui.gen_card_width }}</label>
+      <input id="gen-width" type="number" min="640" max="1400" value="760">
+
+      <label for="gen-langs">{{ ui.gen_langs_count }}</label>
+      <input id="gen-langs" type="number" min="1" max="10" value="4">
+
+      <label class="toggle">
+        <input id="gen-animate" type="checkbox" checked>
+        {{ ui.gen_animate }}
+      </label>
+
+      <label for="gen-animation">{{ ui.gen_animation_mode }}</label>
+      <select id="gen-animation">
+        <option value="all">{{ ui.gen_anim_all }}</option>
+        <option value="soft">{{ ui.gen_anim_soft }}</option>
+        <option value="bars">{{ ui.gen_anim_bars }}</option>
+        <option value="ring">{{ ui.gen_anim_ring }}</option>
+        <option value="none">{{ ui.gen_anim_none }}</option>
+      </select>
+
+      <label for="gen-duration">{{ ui.gen_duration }}</label>
+      <input id="gen-duration" type="number" min="350" max="7000" value="1400">
+    </section>
+
+    <section class="card span-8 generator-preview">
+      <div class="category-head">
+        <h2>{{ ui.gen_preview }}</h2>
+        <div class="actions">
+          <button id="gen-copy-url" type="button" class="button">{{ ui.gen_copy_url }}</button>
+          <button id="gen-copy-md" type="button" class="button secondary">{{ ui.gen_copy_md }}</button>
+          <a id="gen-open-url" class="button secondary" href="#" target="_blank" rel="noopener">{{ ui.gen_open_url }}</a>
+        </div>
+      </div>
+
+      <label for="gen-url">{{ ui.gen_generated_url }}</label>
+      <textarea id="gen-url" rows="3" class="generator-textarea"></textarea>
+
+      <label for="gen-md">{{ ui.gen_markdown_embed }}</label>
+      <textarea id="gen-md" rows="2" class="generator-textarea"></textarea>
+
+      <div id="gen-svg-wrap" class="generator-svg-wrap">
+        <img id="gen-preview-image" alt="{{ ui.gen_preview_alt }}" loading="lazy">
+      </div>
+      <pre id="gen-preview-json" class="generator-json hidden"></pre>
+    </section>
+  </main>
+  <script id="i18n-client" type="application/json">{{ client_i18n|tojson }}</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

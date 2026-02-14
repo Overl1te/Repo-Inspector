@@ -1,0 +1,26 @@
+{
+  "id": "light",
+  "order": 20,
+  "label": {
+    "en": "Light",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#FFFFFF",
+    "bg_end": "#F6F9FF",
+    "border": "#D0DCEF",
+    "panel": "#FFFFFF",
+    "overlay": "#F2F6FC",
+    "chip_bg": "#E9EEF7",
+    "chip_text": "#3E5068",
+    "text": "#111827",
+    "muted": "#52657D",
+    "accent": "#2563EB",
+    "accent_2": "#06B6D4",
+    "accent_soft": "#BFD1FF",
+    "track": "#DCE5F2",
+    "pass": "#13763A",
+    "warn": "#A4510A",
+    "fail": "#B91C1C"
+  }
+}

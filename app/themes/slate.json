@@ -1,0 +1,26 @@
+{
+  "id": "slate",
+  "order": 120,
+  "label": {
+    "en": "Slate",
+    "ru": "??????"
+  },
+  "palette": {
+    "bg_start": "#F1F5F9",
+    "bg_end": "#E2E8F0",
+    "border": "#94A3B8",
+    "panel": "#F8FAFC",
+    "overlay": "#E8EEF6",
+    "chip_bg": "#DBE5F0",
+    "chip_text": "#334155",
+    "text": "#0F172A",
+    "muted": "#475569",
+    "accent": "#0EA5E9",
+    "accent_2": "#3B82F6",
+    "accent_soft": "#BAD0E8",
+    "track": "#D0DBEA",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#B91C1C"
+  }
+}

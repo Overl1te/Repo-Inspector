@@ -1,0 +1,19 @@
+app:
+  name: "Repo Inspector"
+  logo_path: "/static/logo.png"
+  title_separator: "-"
+
+github:
+  token: ""
+  app_token: ""
+  api_base: "https://api.github.com"
+
+database:
+  url: "sqlite:///./data/app.db"
+
+scan:
+  rate_limit_per_minute: 25
+  daily_quota: 300
+  cache_ttl_seconds: 1800
+  repo_history_keep: 20
+  stale_active_job_minutes: 120

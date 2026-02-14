@@ -1,0 +1,26 @@
+{
+  "id": "graphite",
+  "order": 60,
+  "label": {
+    "en": "Graphite",
+    "ru": "??????"
+  },
+  "palette": {
+    "bg_start": "#F4F5F7",
+    "bg_end": "#E9EDF3",
+    "border": "#B7C1D1",
+    "panel": "#FFFFFF",
+    "overlay": "#EEF1F6",
+    "chip_bg": "#E2E7EF",
+    "chip_text": "#3B4A62",
+    "text": "#1A2535",
+    "muted": "#58677F",
+    "accent": "#2563EB",
+    "accent_2": "#0EA5E9",
+    "accent_soft": "#BFD0EA",
+    "track": "#D7DFEC",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#B91C1C"
+  }
+}

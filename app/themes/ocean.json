@@ -1,0 +1,26 @@
+{
+  "id": "ocean",
+  "order": 10,
+  "label": {
+    "en": "Ocean",
+    "ru": "?????"
+  },
+  "palette": {
+    "bg_start": "#F8FBFF",
+    "bg_end": "#EEF5FF",
+    "border": "#A8CBFF",
+    "panel": "#FFFFFF",
+    "overlay": "#EDF4FF",
+    "chip_bg": "#E7F0FF",
+    "chip_text": "#2D4E83",
+    "text": "#14284B",
+    "muted": "#3F6191",
+    "accent": "#16A4E0",
+    "accent_2": "#1AB9A2",
+    "accent_soft": "#B8DBFF",
+    "track": "#D3E3FB",
+    "pass": "#0F7F39",
+    "warn": "#B55A0C",
+    "fail": "#BE1D2D"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "nord",
+  "order": 70,
+  "label": {
+    "en": "Nord",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#EDF4FB",
+    "bg_end": "#E4EEF8",
+    "border": "#A8C0DF",
+    "panel": "#F8FBFF",
+    "overlay": "#E9F0F9",
+    "chip_bg": "#DAE6F5",
+    "chip_text": "#334E70",
+    "text": "#1D2D44",
+    "muted": "#4B6485",
+    "accent": "#3B82F6",
+    "accent_2": "#0EA5E9",
+    "accent_soft": "#BDD4EF",
+    "track": "#CDDCEC",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#BE123C"
+  }
+}

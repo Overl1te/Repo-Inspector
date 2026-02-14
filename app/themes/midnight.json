@@ -1,0 +1,26 @@
+{
+  "id": "midnight",
+  "order": 30,
+  "label": {
+    "en": "Midnight",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#0D1628",
+    "bg_end": "#121F35",
+    "border": "#2B3E5F",
+    "panel": "#182844",
+    "overlay": "#111F36",
+    "chip_bg": "#1A2F50",
+    "chip_text": "#AEC4E6",
+    "text": "#E8F1FC",
+    "muted": "#9DB4D5",
+    "accent": "#2FB2EB",
+    "accent_2": "#2BD3A6",
+    "accent_soft": "#2C517F",
+    "track": "#2F4565",
+    "pass": "#4ADE80",
+    "warn": "#FBBF24",
+    "fail": "#FCA5A5"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "rose",
+  "order": 80,
+  "label": {
+    "en": "Rose",
+    "ru": "????"
+  },
+  "palette": {
+    "bg_start": "#FFF1F5",
+    "bg_end": "#FFE4EC",
+    "border": "#F9A8D4",
+    "panel": "#FFF7FA",
+    "overlay": "#FFEAF1",
+    "chip_bg": "#FFE1EB",
+    "chip_text": "#8B1E4E",
+    "text": "#4A1029",
+    "muted": "#7C2D52",
+    "accent": "#EC4899",
+    "accent_2": "#F43F5E",
+    "accent_soft": "#FBC7DD",
+    "track": "#F6D3E3",
+    "pass": "#15803D",
+    "warn": "#C2410C",
+    "fail": "#BE123C"
+  }
+}

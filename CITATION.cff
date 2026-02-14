@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: "Repo Inspector"
+message: "If you use Repo Inspector in research or publications, please cite this software."
+type: software
+authors:
+  - name: "Overl1te"
+repository-code: "https://github.com/Overl1te/Repo-Inspector"
+url: "https://github.com/Overl1te/Repo-Inspector"
+version: "0.2.0"
+keywords:
+  - github
+  - fastapi
+  - repository-quality
+  - ci
+  - security
+  - devex

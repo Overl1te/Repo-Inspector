@@ -1,0 +1,26 @@
+checks:
+  readme_min_length: 300
+  stale_days: 120
+
+scoring:
+  category_weights:
+    docs: 15
+    ci: 20
+    security: 25
+    quality: 20
+    maintenance: 10
+    governance: 10
+
+baseline:
+  min_score: 75
+  max_score_drop: 5
+
+ignore:
+  checks:
+    - issue_template_exists
+
+security:
+  secret_allowlist_paths:
+    - docs/examples/*
+  secret_allowlist_patterns:
+    - AKIA_TEST_

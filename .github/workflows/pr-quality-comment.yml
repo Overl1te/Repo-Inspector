@@ -1,0 +1,118 @@
+name: PR Quality Comment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  inspect:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Generate report and summary
+        run: |
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY##*/}"
+          mkdir -p .tmp_reports
+          python scripts/generate_report.py \
+            --repo-url "https://github.com/${GITHUB_REPOSITORY}" \
+            --lang "en" \
+            --output-dir ".tmp_reports"
+          python scripts/render_report_summary.py \
+            --report-file ".tmp_reports/${OWNER}__${REPO}.en.json" \
+            --output-file ".tmp_reports/comment.md"
+          python scripts/pr_diff_summary.py \
+            --owner "${OWNER}" \
+            --repo "${REPO}" \
+            --pr "${{ github.event.pull_request.number }}" \
+            --output-file ".tmp_reports/diff.md"
+          cat .tmp_reports/comment.md .tmp_reports/diff.md > .tmp_reports/full_comment.md
+
+      - name: Create GitHub Check Run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const reportPath = `.tmp_reports/${context.repo.owner}__${context.repo.repo}.en.json`;
+            const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+            const score = Number(report.score_total || 0);
+            let conclusion = "success";
+            if (score < 60) conclusion = "failure";
+            else if (score < 80) conclusion = "neutral";
+            const summary = [
+              `Total score: ${score}/100`,
+              `Detected stacks: ${(report.detected_stacks || []).join(", ") || "n/a"}`,
+            ].join("\n");
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: "Repo Inspector",
+              head_sha: context.payload.pull_request.head.sha,
+              status: "completed",
+              conclusion,
+              output: {
+                title: "Repository quality check",
+                summary,
+              },
+            });
+
+      - name: Upsert PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- repo-inspector -->";
+            const summary = fs.readFileSync(".tmp_reports/full_comment.md", "utf8");
+            const body = `${marker}\n${summary}`;
+            const issue_number = context.payload.pull_request.number;
+            const { owner, repo } = context.repo;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find(
+              (c) =>
+                c.user &&
+                c.user.type === "Bot" &&
+                typeof c.body === "string" &&
+                c.body.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }

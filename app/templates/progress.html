@@ -1,0 +1,48 @@
+﻿<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ ui.progress_title }} {{ site.title_separator }} {{ job.repo_owner }}/{{ job.repo_name }} {{ site.title_separator }} {{ site.app_name }}</title>
+  <link rel="icon" type="image/png" href="{{ site.logo_path }}">
+  <link rel="apple-touch-icon" href="{{ site.logo_path }}">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-page="progress" data-job-id="{{ job.id }}" data-lang="{{ lang }}" data-status-label="{{ ui.progress_status }}">
+  <main class="container container-progress">
+    <section class="card progress-card span-12">
+      <div class="lang-switch lang-{{ lang }}">
+        <a class="link {% if lang == 'en' %}active{% endif %}" href="/jobs/{{ job.id }}?lang=en">EN</a>
+        <a class="link {% if lang == 'ru' %}active{% endif %}" href="/jobs/{{ job.id }}?lang=ru">RU</a>
+      </div>
+      <div class="progress-layout">
+        <div class="progress-main">
+          <p class="kicker mono">{{ job.repo_owner }}/{{ job.repo_name }}</p>
+          <h1>{{ ui.progress_title }}</h1>
+          <p id="status-line" class="progress-status-line">{{ ui.progress_status }}: {{ job.status }}</p>
+          <div class="progress-track progress-track-large">
+            <div id="job-progress" class="progress-fill" style="width: {{ job.progress }}%">{{ job.progress }}%</div>
+          </div>
+          <p class="muted">{{ ui.progress_hint }}</p>
+          <p id="job-error" class="error"></p>
+          <a class="link" href="/?lang={{ lang }}">{{ ui.start_new }}</a>
+        </div>
+        <aside class="progress-side">
+          <div class="pulse-orb" aria-hidden="true"></div>
+          <div class="preview-card">
+            <span>{{ ui.progress_repo }}</span>
+            <strong>{{ job.repo_owner }}/{{ job.repo_name }}</strong>
+          </div>
+          <div class="preview-card">
+            <span>{{ ui.job_id }}</span>
+            <strong class="mono">{{ job.id[:8] }}</strong>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <script id="i18n-client" type="application/json">{{ client_i18n|tojson }}</script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

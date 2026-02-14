@@ -1,0 +1,26 @@
+{
+  "id": "lavender",
+  "order": 100,
+  "label": {
+    "en": "Lavender",
+    "ru": "???????"
+  },
+  "palette": {
+    "bg_start": "#F6F3FF",
+    "bg_end": "#EDE9FE",
+    "border": "#C4B5FD",
+    "panel": "#FBFAFF",
+    "overlay": "#F1EEFF",
+    "chip_bg": "#E6E0FF",
+    "chip_text": "#4C3F9C",
+    "text": "#272356",
+    "muted": "#5F5B87",
+    "accent": "#8B5CF6",
+    "accent_2": "#6366F1",
+    "accent_soft": "#D2C7FB",
+    "track": "#DFD8F5",
+    "pass": "#15803D",
+    "warn": "#B45309",
+    "fail": "#BE123C"
+  }
+}
