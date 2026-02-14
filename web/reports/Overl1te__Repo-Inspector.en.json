@@ -1,0 +1,321 @@
+{
+  "job_id": null,
+  "repo_owner": "Overl1te",
+  "repo_name": "Repo-Inspector",
+  "repo_url": "https://github.com/Overl1te/Repo-Inspector",
+  "generated_at": "2026-02-14T20:09:11.826729+00:00",
+  "score_total": 83,
+  "commit_sha": "251b200e2c430f029ba30ebee18320ce0fa5b0c4",
+  "detected_stacks": [
+    "python"
+  ],
+  "project_metrics": {
+    "total_code_files": 22,
+    "total_code_lines": 6296,
+    "scanned_code_files": 22,
+    "sampled": false,
+    "by_extension": [
+      {
+        "extension": ".py",
+        "files": 20,
+        "lines": 5267
+      },
+      {
+        "extension": ".js",
+        "files": 2,
+        "lines": 1029
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "docs",
+      "name": "Docs",
+      "weight": 15,
+      "score": 15,
+      "checks": [
+        {
+          "id": "readme_exists",
+          "name": "README file exists",
+          "status": "pass",
+          "details": "Found at README.md",
+          "recommendation": null
+        },
+        {
+          "id": "readme_length",
+          "name": "README length >= 200 chars",
+          "status": "pass",
+          "details": "README length: 8437 characters.",
+          "recommendation": null
+        },
+        {
+          "id": "contributing_exists",
+          "name": "CONTRIBUTING file exists",
+          "status": "pass",
+          "details": "Found at CONTRIBUTING.md",
+          "recommendation": null
+        },
+        {
+          "id": "license_exists",
+          "name": "License metadata exists",
+          "status": "pass",
+          "details": "License detected.",
+          "recommendation": null
+        }
+      ],
+      "recommendations": []
+    },
+    {
+      "id": "ci",
+      "name": "CI",
+      "weight": 15,
+      "score": 10,
+      "checks": [
+        {
+          "id": "workflow_files",
+          "name": "Workflow files exist",
+          "status": "pass",
+          "details": "Detected 3 workflow files.",
+          "recommendation": null
+        },
+        {
+          "id": "workflow_trigger",
+          "name": "Workflow runs on push/pull_request",
+          "status": "warn",
+          "details": "No workflow configured for push or pull_request.",
+          "recommendation": "Use on: [push, pull_request] in CI workflow."
+        },
+        {
+          "id": "ci_stage_coverage",
+          "name": "CI covers key stages (lint/test/build/release)",
+          "status": "warn",
+          "details": "Detected CI stage coverage for only 2/4 stages.",
+          "recommendation": "Expand workflows to cover lint, test, build and release stages."
+        }
+      ],
+      "recommendations": [
+        "Expand workflows to cover lint, test, build and release stages.",
+        "Use on: [push, pull_request] in CI workflow."
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "weight": 25,
+      "score": 16,
+      "checks": [
+        {
+          "id": "actions_pinned",
+          "name": "GitHub Actions are pinned",
+          "status": "warn",
+          "details": "Found unpinned action refs: v3, v4, v5, v7.",
+          "recommendation": "Pin GitHub Actions to commit SHA (40 hex chars)."
+        },
+        {
+          "id": "secret_patterns",
+          "name": "No exposed secret patterns",
+          "status": "pass",
+          "details": "No predefined secret patterns detected in scanned files.",
+          "recommendation": null
+        },
+        {
+          "id": "dependency_hygiene",
+          "name": "Dependency security hygiene",
+          "status": "warn",
+          "details": "Only partial dependency security setup detected.",
+          "recommendation": "Use lockfiles and configure .github/dependabot.yml."
+        },
+        {
+          "id": "dependency_vulnerabilities",
+          "name": "Known vulnerabilities in dependencies",
+          "status": "warn",
+          "details": "No pinned dependencies detected for vulnerability scan.",
+          "recommendation": "Use lockfiles and pinned versions to enable dependency vulnerability scanning."
+        }
+      ],
+      "recommendations": [
+        "Pin GitHub Actions to commit SHA (40 hex chars).",
+        "Use lockfiles and configure .github/dependabot.yml.",
+        "Use lockfiles and pinned versions to enable dependency vulnerability scanning."
+      ]
+    },
+    {
+      "id": "quality",
+      "name": "Quality",
+      "weight": 20,
+      "score": 20,
+      "checks": [
+        {
+          "id": "lint_config",
+          "name": "Linter/formatter config exists",
+          "status": "pass",
+          "details": "Found lint/format config.",
+          "recommendation": null
+        },
+        {
+          "id": "tests_exist",
+          "name": "Tests exist",
+          "status": "pass",
+          "details": "Tests detected in repository.",
+          "recommendation": null
+        }
+      ],
+      "recommendations": []
+    },
+    {
+      "id": "maintenance",
+      "name": "Maintenance",
+      "weight": 15,
+      "score": 15,
+      "checks": [
+        {
+          "id": "releases_or_tags",
+          "name": "Releases or tags exist",
+          "status": "pass",
+          "details": "Release/tag metadata found.",
+          "recommendation": null
+        },
+        {
+          "id": "recent_activity",
+          "name": "Recent activity (<=180 days)",
+          "status": "pass",
+          "details": "Recent activity 0 days ago.",
+          "recommendation": null
+        }
+      ],
+      "recommendations": []
+    },
+    {
+      "id": "governance",
+      "name": "Governance",
+      "weight": 10,
+      "score": 7,
+      "checks": [
+        {
+          "id": "codeowners_exists",
+          "name": "CODEOWNERS file exists",
+          "status": "warn",
+          "details": "CODEOWNERS not found.",
+          "recommendation": "Add CODEOWNERS for review ownership."
+        },
+        {
+          "id": "pr_template_exists",
+          "name": "Pull request template exists",
+          "status": "warn",
+          "details": "PR template not found.",
+          "recommendation": "Add .github/pull_request_template.md."
+        },
+        {
+          "id": "issue_template_exists",
+          "name": "Issue template exists",
+          "status": "warn",
+          "details": "Issue template not found.",
+          "recommendation": "Add issue templates in .github/ISSUE_TEMPLATE/."
+        },
+        {
+          "id": "security_policy_exists",
+          "name": "Security policy exists",
+          "status": "pass",
+          "details": "SECURITY.md found.",
+          "recommendation": null
+        },
+        {
+          "id": "policy_config_valid",
+          "name": "Policy configuration file",
+          "status": "pass",
+          "details": "No policy file found. Using default settings.",
+          "recommendation": null
+        }
+      ],
+      "recommendations": [
+        "Add .github/pull_request_template.md.",
+        "Add CODEOWNERS for review ownership.",
+        "Add issue templates in .github/ISSUE_TEMPLATE/."
+      ]
+    }
+  ],
+  "fix_plan": [
+    {
+      "priority": 1,
+      "category_id": "security",
+      "category_name": "Security",
+      "check_id": "actions_pinned",
+      "check_name": "GitHub Actions are pinned",
+      "status": "warn",
+      "impact_points": 3.12,
+      "action": "Pin GitHub Actions to commit SHA (40 hex chars)."
+    },
+    {
+      "priority": 2,
+      "category_id": "security",
+      "category_name": "Security",
+      "check_id": "dependency_hygiene",
+      "check_name": "Dependency security hygiene",
+      "status": "warn",
+      "impact_points": 3.12,
+      "action": "Use lockfiles and configure .github/dependabot.yml."
+    },
+    {
+      "priority": 3,
+      "category_id": "security",
+      "category_name": "Security",
+      "check_id": "dependency_vulnerabilities",
+      "check_name": "Known vulnerabilities in dependencies",
+      "status": "warn",
+      "impact_points": 3.12,
+      "action": "Use lockfiles and pinned versions to enable dependency vulnerability scanning."
+    },
+    {
+      "priority": 4,
+      "category_id": "ci",
+      "category_name": "CI",
+      "check_id": "workflow_trigger",
+      "check_name": "Workflow runs on push/pull_request",
+      "status": "warn",
+      "impact_points": 2.5,
+      "action": "Use on: [push, pull_request] in CI workflow."
+    },
+    {
+      "priority": 5,
+      "category_id": "ci",
+      "category_name": "CI",
+      "check_id": "ci_stage_coverage",
+      "check_name": "CI covers key stages (lint/test/build/release)",
+      "status": "warn",
+      "impact_points": 2.5,
+      "action": "Expand workflows to cover lint, test, build and release stages."
+    },
+    {
+      "priority": 6,
+      "category_id": "governance",
+      "category_name": "Governance",
+      "check_id": "codeowners_exists",
+      "check_name": "CODEOWNERS file exists",
+      "status": "warn",
+      "impact_points": 1.0,
+      "action": "Add CODEOWNERS for review ownership."
+    },
+    {
+      "priority": 7,
+      "category_id": "governance",
+      "category_name": "Governance",
+      "check_id": "pr_template_exists",
+      "check_name": "Pull request template exists",
+      "status": "warn",
+      "impact_points": 1.0,
+      "action": "Add .github/pull_request_template.md."
+    },
+    {
+      "priority": 8,
+      "category_id": "governance",
+      "category_name": "Governance",
+      "check_id": "issue_template_exists",
+      "check_name": "Issue template exists",
+      "status": "warn",
+      "impact_points": 1.0,
+      "action": "Add issue templates in .github/ISSUE_TEMPLATE/."
+    }
+  ],
+  "comparison": null,
+  "policy_issues": []
+}
