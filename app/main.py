@@ -462,6 +462,7 @@ async def readme_stats_api(
     if format == "json":
         if kind == "quality":
             payload = await _build_quality_stats_payload(owner, repo, db, include_report=include_report)
+            payload = _localize_quality_payload(payload, normalized_locale)
         else:
             payload = await _build_public_repo_stats_payload(owner, repo, langs_count=max(1, langs_count))
         return JSONResponse(payload)
@@ -506,8 +507,10 @@ async def quality_stats_json(
     db: Session = Depends(get_db),
     fields: str | None = None,
     include_report: bool = False,
+    locale: str = "en",
 ) -> JSONResponse:
     payload = await _build_quality_stats_payload(owner, repo, db, include_report=include_report)
+    payload = _localize_quality_payload(payload, normalize_lang(locale))
     if fields:
         quality_raw = payload.get("quality")
         if isinstance(quality_raw, dict):
@@ -1112,6 +1115,35 @@ def _select_dict_fields(data: dict[str, object], fields: str) -> dict[str, objec
     if not allowed:
         return data
     return {key: val for key, val in data.items() if key.lower() in allowed}
+
+
+def _localize_quality_payload(payload: dict[str, object], lang: str) -> dict[str, object]:
+    """Localize nested quality report fields for API consumers."""
+
+    quality = payload.get("quality")
+    if not isinstance(quality, dict):
+        return payload
+
+    report = quality.get("report")
+    if isinstance(report, dict):
+        localized_report = localize_report(report, lang)
+        quality["report"] = localized_report
+        categories = localized_report.get("categories")
+        if isinstance(categories, list):
+            name_by_id = {
+                str(item.get("id")): str(item.get("name"))
+                for item in categories
+                if isinstance(item, dict) and item.get("id") and item.get("name")
+            }
+            category_scores = quality.get("category_scores")
+            if isinstance(category_scores, list):
+                for item in category_scores:
+                    if not isinstance(item, dict):
+                        continue
+                    category_id = str(item.get("id", ""))
+                    if category_id in name_by_id:
+                        item["name"] = name_by_id[category_id]
+    return payload
 
 
 def _svg_cache_headers(cache_seconds: int) -> dict[str, str]:

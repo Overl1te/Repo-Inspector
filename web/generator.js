@@ -36,9 +36,9 @@ const I18N = {
     failedJson: "Failed to load JSON",
   },
   ru: {
-    pageTitle: "Repo Inspector - Р“РµРЅРµСЂР°С‚РѕСЂ",
+    pageTitle: "Repo Inspector - \u0413\u0435\u043d\u0435\u0440\u0430\u0442\u043e\u0440",
     kicker: "\u0412\u0421\u0422\u0420\u0410\u0418\u0412\u0410\u0415\u041c\u0410\u042f \u0421\u0422\u0410\u0422\u0418\u0421\u0422\u0418\u041a\u0410",
-    title: "SVG/JSON РіРµРЅРµСЂР°С‚РѕСЂ",
+    title: "SVG/JSON \u0433\u0435\u043d\u0435\u0440\u0430\u0442\u043e\u0440",
     subtitle: "\u0421\u043e\u0431\u0438\u0440\u0430\u0439\u0442\u0435 URL-\u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b, \u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435 \u043f\u0440\u0435\u0432\u044c\u044e \u0438 \u043a\u043e\u043f\u0438\u0440\u0443\u0439\u0442\u0435 URL/Markdown.",
     back: "\u041d\u0430\u0437\u0430\u0434 \u043a \u043e\u0442\u0447\u0435\u0442\u0430\u043c",
     config: "\u041a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044f",
@@ -80,6 +80,11 @@ const THEMES = [
 
 const REPO_RE = /^https?:\/\/github\.com\/([^/\s]+)\/([^/\s#]+?)(?:\.git)?\/?$/;
 let lang = "en";
+
+const langQuery = new URLSearchParams(window.location.search).get("lang");
+if (langQuery === "ru" || langQuery === "en") {
+  lang = langQuery;
+}
 
 const refs = {
   body: document.body,
@@ -147,6 +152,7 @@ function fillThemes() {
 
 function applyI18n() {
   document.title = t("pageTitle");
+  document.documentElement.lang = lang;
   document.getElementById("gen-kicker").textContent = t("kicker");
   document.getElementById("gen-title").textContent = t("title");
   document.getElementById("gen-subtitle").textContent = t("subtitle");
@@ -266,8 +272,19 @@ async function refreshPreview() {
 
 function bindEvents() {
   const controls = [
-    refs.owner, refs.repo, refs.kind, refs.format, refs.theme, refs.locale, refs.customTitle, refs.hide,
-    refs.width, refs.langs, refs.animate, refs.animation, refs.duration,
+    refs.owner,
+    refs.repo,
+    refs.kind,
+    refs.format,
+    refs.theme,
+    refs.locale,
+    refs.customTitle,
+    refs.hide,
+    refs.width,
+    refs.langs,
+    refs.animate,
+    refs.animation,
+    refs.duration,
   ];
   controls.forEach((node) => {
     node.addEventListener("input", () => void refreshPreview());
@@ -315,7 +332,11 @@ function bindEvents() {
   refs.langSwitch.querySelectorAll(".link").forEach((node) => {
     node.addEventListener("click", (event) => {
       event.preventDefault();
+      const prevLang = lang;
       lang = node.dataset.lang || "en";
+      if (!refs.locale.value || refs.locale.value === prevLang) {
+        refs.locale.value = lang;
+      }
       applyI18n();
       void refreshPreview();
     });
@@ -323,7 +344,7 @@ function bindEvents() {
 }
 
 fillThemes();
+if (refs.locale) refs.locale.value = lang;
 applyI18n();
 bindEvents();
 void refreshPreview();
-

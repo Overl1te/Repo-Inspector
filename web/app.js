@@ -114,6 +114,11 @@ const refs = {
 };
 
 let lang = "en";
+let currentRepoUrl = "";
+const langQuery = new URLSearchParams(window.location.search).get("lang");
+if (langQuery === "ru" || langQuery === "en") {
+  lang = langQuery;
+}
 
 function tr(key) {
   return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
@@ -212,6 +217,7 @@ function renderHelp(repoUrl) {
 
 function applyLangSwitch() {
   refs.body.dataset.lang = lang;
+  document.documentElement.lang = lang;
   refs.langSwitch.classList.toggle("lang-ru", lang === "ru");
   refs.langSwitch.classList.toggle("lang-en", lang === "en");
   refs.langSwitch.querySelectorAll(".link").forEach((node) => {
@@ -231,7 +237,10 @@ function applyLangSwitch() {
   refs.previewFlowValue.textContent = tr("flowValue");
   refs.previewApiLabel.textContent = tr("apiLabel");
   refs.previewApiValue.textContent = USE_REMOTE_API ? API_BASE : tr("apiLocal");
-  if (refs.openGenerator) refs.openGenerator.textContent = tr("openGenerator");
+  if (refs.openGenerator) {
+    refs.openGenerator.textContent = tr("openGenerator");
+    refs.openGenerator.href = `./generator.html?lang=${encodeURIComponent(lang)}`;
+  }
   document.title = tr("tab");
 }
 
@@ -500,6 +509,7 @@ async function loadReport(repoUrl) {
     const loaded = USE_REMOTE_API
       ? await loadFromRemoteApi(parsed, repoUrl)
       : await loadFromLocalReports(parsed, repoUrl);
+    currentRepoUrl = repoUrl;
     refs.error.textContent = tr("reportReady");
     renderReport(loaded.report, repoUrl, loaded.jsonHref);
   } catch (error) {
@@ -513,6 +523,7 @@ refs.langSwitch.querySelectorAll(".link").forEach((node) => {
     event.preventDefault();
     lang = node.dataset.lang || "en";
     applyLangSwitch();
+    if (currentRepoUrl) void loadReport(currentRepoUrl);
   });
 });
 
