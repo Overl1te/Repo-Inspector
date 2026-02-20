@@ -1,26 +1,22 @@
 {
   "id": "nord",
   "order": 70,
-  "label": {
-    "en": "Nord",
-    "ru": "????"
-  },
   "palette": {
-    "bg_start": "#EDF4FB",
-    "bg_end": "#E4EEF8",
-    "border": "#A8C0DF",
-    "panel": "#F8FBFF",
-    "overlay": "#E9F0F9",
-    "chip_bg": "#DAE6F5",
-    "chip_text": "#334E70",
-    "text": "#1D2D44",
-    "muted": "#4B6485",
-    "accent": "#3B82F6",
-    "accent_2": "#0EA5E9",
-    "accent_soft": "#BDD4EF",
-    "track": "#CDDCEC",
-    "pass": "#15803D",
-    "warn": "#B45309",
-    "fail": "#BE123C"
+    "bg_start": "#1C2433",
+    "bg_end": "#243247",
+    "border": "#516B8C",
+    "panel": "#27374D",
+    "overlay": "#1F2C3F",
+    "chip_bg": "#314561",
+    "chip_text": "#D7E5F8",
+    "text": "#ECF3FF",
+    "muted": "#B5C8E1",
+    "accent": "#88C0D0",
+    "accent_2": "#81A1C1",
+    "accent_soft": "#344A68",
+    "track": "#3B5270",
+    "pass": "#4ADE80",
+    "warn": "#F8C146",
+    "fail": "#F38BA8"
   }
 }

@@ -1,10 +1,6 @@
 {
   "id": "matrix",
   "order": 160,
-  "label": {
-    "en": "Matrix",
-    "ru": "???????"
-  },
   "palette": {
     "bg_start": "#0F1B0F",
     "bg_end": "#142414",

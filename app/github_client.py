@@ -73,12 +73,23 @@ class GitHubClient:
     LINE_COUNT_EXTENSIONS = {
         ".py",
         ".js",
+        ".mjs",
+        ".cjs",
         ".jsx",
         ".ts",
+        ".mts",
+        ".cts",
         ".tsx",
+        ".html",
+        ".htm",
+        ".css",
+        ".scss",
+        ".sass",
+        ".less",
         ".java",
         ".kt",
         ".kts",
+        ".dart",
         ".cs",
         ".cpp",
         ".cc",
@@ -86,19 +97,70 @@ class GitHubClient:
         ".c",
         ".h",
         ".hpp",
+        ".m",
+        ".mm",
         ".go",
         ".rs",
         ".php",
         ".rb",
         ".swift",
         ".scala",
+        ".groovy",
+        ".gradle",
+        ".fs",
+        ".fsi",
+        ".fsx",
+        ".vb",
+        ".vbs",
+        ".r",
+        ".rmd",
+        ".jl",
+        ".lua",
+        ".ex",
+        ".exs",
+        ".erl",
+        ".hrl",
+        ".clj",
+        ".cljs",
+        ".cljc",
+        ".hs",
+        ".elm",
+        ".ml",
+        ".mli",
+        ".pl",
+        ".pm",
+        ".sbt",
+        ".sc",
+        ".nim",
+        ".zig",
+        ".sol",
+        ".proto",
+        ".tf",
+        ".hcl",
+        ".ps1",
+        ".psm1",
+        ".psd1",
+        ".bat",
+        ".cmd",
+        ".bash",
+        ".zsh",
+        ".fish",
+        ".vue",
+        ".svelte",
         ".sql",
         ".sh",
-        ".lua",
         ".pt",
+    }
+    LINE_COUNT_FILENAMES = {
+        "dockerfile",
+        "makefile",
+        "cmakelists.txt",
+        "jenkinsfile",
+        "justfile",
     }
     MAX_LINE_COUNT_FILES = 450
     MAX_LINE_COUNT_FILE_SIZE = 220_000
+    MAX_CONCURRENT_FILE_FETCHES = 24
 
     def __init__(self, token: str | None = None) -> None:
         """Create client with optional per-request token override."""
@@ -129,7 +191,8 @@ class GitHubClient:
             try:
                 response = await client.request(method, url, headers=self.headers, params=params)
             except httpx.HTTPError as exc:
-                raise GitHubAPIError(f"GitHub request failed: {exc}") from exc
+                detail = self._http_error_detail(exc)
+                raise GitHubAPIError(f"GitHub request failed: {detail}") from exc
 
         payload: Any = None
         try:
@@ -156,6 +219,30 @@ class GitHubClient:
         raise GitHubAPIError("GitHub API returned non-JSON response.")
 
     @staticmethod
+    def _http_error_detail(exc: httpx.HTTPError) -> str:
+        """Extract stable, human-readable text from httpx exceptions."""
+
+        direct = str(exc).strip()
+        if direct:
+            return direct
+
+        cause = exc.__cause__ or exc.__context__
+        if cause:
+            nested = str(cause).strip()
+            if nested:
+                return nested
+
+        if isinstance(exc, httpx.ConnectTimeout):
+            return "Connection timed out while reaching GitHub API."
+        if isinstance(exc, httpx.ReadTimeout):
+            return "GitHub API did not respond in time."
+        if isinstance(exc, httpx.ConnectError):
+            return "Could not establish network connection to GitHub API."
+        if isinstance(exc, httpx.TimeoutException):
+            return "GitHub API request timed out."
+        return f"{exc.__class__.__name__} while contacting GitHub API."
+
+    @staticmethod
     def _parse_dt(value: str | None) -> datetime | None:
         """Parse ISO8601 timestamp from GitHub payload."""
 
@@ -172,7 +259,12 @@ class GitHubClient:
         except (TypeError, ValueError):
             return default
 
-    async def get_repo_snapshot(self, owner: str, repo: str) -> RepoSnapshot:
+    async def get_repo_snapshot(
+        self,
+        owner: str,
+        repo: str,
+        line_count_fetch_limit: int | None = None,
+    ) -> RepoSnapshot:
         """Fetch repository snapshot required for quality checks."""
 
         repo_data = await self._request("GET", f"/repos/{owner}/{repo}")
@@ -221,6 +313,7 @@ class GitHubClient:
                 has_license = False
 
         line_count_paths, line_count_candidates_total = self._pick_line_count_files(tree_paths, path_sizes)
+        line_count_paths = self._apply_line_count_fetch_limit(line_count_paths, line_count_fetch_limit)
         line_count_sampled = line_count_candidates_total > len(line_count_paths)
         important_files = self._pick_important_files(tree_paths, workflow_paths, line_count_paths)
         file_contents = await self._fetch_files(owner, repo, important_files, default_branch)
@@ -372,6 +465,10 @@ class GitHubClient:
                 "gemfile.lock",
                 "composer.json",
                 "composer.lock",
+                "pubspec.yaml",
+                "pubspec.lock",
+                "analysis_options.yaml",
+                "dart_test.yaml",
             }:
                 important.add(path)
             if filename in {"security.md", "codeowners"}:
@@ -403,7 +500,7 @@ class GitHubClient:
             if filename.startswith("."):
                 continue
             ext = self._extension(lower)
-            if ext not in self.LINE_COUNT_EXTENSIONS:
+            if ext not in self.LINE_COUNT_EXTENSIONS and filename not in self.LINE_COUNT_FILENAMES:
                 continue
             if path_sizes.get(path, 0) > self.MAX_LINE_COUNT_FILE_SIZE:
                 continue
@@ -415,6 +512,18 @@ class GitHubClient:
         return candidates, total
 
     @staticmethod
+    def _apply_line_count_fetch_limit(paths: list[str], limit: int | None) -> list[str]:
+        if limit is None:
+            return paths
+        try:
+            parsed = int(limit)
+        except (TypeError, ValueError):
+            return paths
+        if parsed <= 0:
+            return []
+        return paths[:parsed]
+
+    @staticmethod
     def _extension(path: str) -> str:
         idx = path.rfind(".")
         return path[idx:] if idx >= 0 else ""
@@ -424,7 +533,11 @@ class GitHubClient:
         if not paths:
             return contents
         async with httpx.AsyncClient(timeout=httpx.Timeout(20.0)) as client:
-            tasks = [self._fetch_single_file(client, owner, repo, path, ref) for path in paths]
+            semaphore = asyncio.Semaphore(self.MAX_CONCURRENT_FILE_FETCHES)
+            tasks = [
+                self._fetch_single_file_guarded(client, semaphore, owner, repo, path, ref)
+                for path in paths
+            ]
             responses = await asyncio.gather(*tasks)
 
         for path, response in zip(paths, responses, strict=False):
@@ -432,6 +545,18 @@ class GitHubClient:
                 continue
             contents[path] = response
         return contents
+
+    async def _fetch_single_file_guarded(
+        self,
+        client: httpx.AsyncClient,
+        semaphore: asyncio.Semaphore,
+        owner: str,
+        repo: str,
+        path: str,
+        ref: str,
+    ) -> str | None:
+        async with semaphore:
+            return await self._fetch_single_file(client, owner, repo, path, ref)
 
     async def _fetch_single_file(
         self,
@@ -441,14 +566,20 @@ class GitHubClient:
         path: str,
         ref: str,
     ) -> str | None:
-        response = await client.get(
-            f"{self.base_url}/repos/{owner}/{repo}/contents/{path}",
-            headers=self.headers,
-            params={"ref": ref},
-        )
+        try:
+            response = await client.get(
+                f"{self.base_url}/repos/{owner}/{repo}/contents/{path}",
+                headers=self.headers,
+                params={"ref": ref},
+            )
+        except httpx.HTTPError:
+            return None
         if response.status_code >= 400:
             return None
-        payload = response.json()
+        try:
+            payload = response.json()
+        except ValueError:
+            return None
         encoded = payload.get("content")
         if not encoded or payload.get("encoding") != "base64":
             return None

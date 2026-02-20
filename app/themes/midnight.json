@@ -1,10 +1,6 @@
 {
   "id": "midnight",
   "order": 30,
-  "label": {
-    "en": "Midnight",
-    "ru": "????"
-  },
   "palette": {
     "bg_start": "#0D1628",
     "bg_end": "#121F35",

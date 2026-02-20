@@ -3,13 +3,18 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 
-def load_report(path: Path) -> dict:
+def load_report(path: Path) -> dict[str, Any]:
+    """Load report payload from JSON file."""
+
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_markdown(report: dict) -> str:
+def build_markdown(report: dict[str, Any]) -> str:
+    """Build short markdown summary from report payload."""
+
     repo_url = report.get("repo_url", "")
     score = report.get("score_total", 0)
     stacks = report.get("detected_stacks", [])
@@ -50,6 +55,8 @@ def build_markdown(report: dict) -> str:
 
 
 def main() -> None:
+    """CLI entrypoint."""
+
     parser = argparse.ArgumentParser(description="Render markdown summary from report JSON.")
     parser.add_argument("--report-file", required=True, help="Path to report JSON file")
     parser.add_argument("--output-file", required=True, help="Path to markdown output")

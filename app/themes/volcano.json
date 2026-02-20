@@ -1,0 +1,22 @@
+{
+  "id": "volcano",
+  "order": 170,
+  "palette": {
+    "bg_start": "#2E120C",
+    "bg_end": "#431A12",
+    "border": "#8C3E2A",
+    "panel": "#35160F",
+    "overlay": "#2C130D",
+    "chip_bg": "#4C2117",
+    "chip_text": "#FFD6B7",
+    "text": "#FFEDE1",
+    "muted": "#E5B79A",
+    "accent": "#FF6A3D",
+    "accent_2": "#FFB347",
+    "accent_soft": "#6B2A1D",
+    "track": "#6A2F22",
+    "pass": "#58D68D",
+    "warn": "#FFC14A",
+    "fail": "#FF6E6E"
+  }
+}

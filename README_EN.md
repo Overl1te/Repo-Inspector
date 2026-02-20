@@ -233,3 +233,19 @@ pytest -q
 ## 📄 License
 
 GNU GPL v3 — see [LICENSE](LICENSE).
+
+## 🚦 Pre-deploy validation
+
+Run built-in checks before deploying:
+
+```bash
+python scripts/predeploy_check.py
+```
+
+Strict mode (includes lint + tests):
+
+```bash
+python scripts/predeploy_check.py --strict
+```
+
+Detailed checklist: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)

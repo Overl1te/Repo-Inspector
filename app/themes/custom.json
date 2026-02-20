@@ -2,10 +2,6 @@
   "id": "custom",
   "order": 999,
   "is_custom": true,
-  "label": {
-    "en": "Custom",
-    "ru": "????"
-  },
   "palette": {
     "bg_start": "#F8FBFF",
     "bg_end": "#EEF5FF",

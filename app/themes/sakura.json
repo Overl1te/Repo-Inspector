@@ -1,0 +1,22 @@
+{
+  "id": "sakura",
+  "order": 200,
+  "palette": {
+    "bg_start": "#FFF7FB",
+    "bg_end": "#FFEFF6",
+    "border": "#E9BED3",
+    "panel": "#FFFFFF",
+    "overlay": "#FDEAF2",
+    "chip_bg": "#F9DFEB",
+    "chip_text": "#7E375D",
+    "text": "#4F1F3A",
+    "muted": "#8E5070",
+    "accent": "#E35D9A",
+    "accent_2": "#FF8DB4",
+    "accent_soft": "#F7CBDD",
+    "track": "#EED4E0",
+    "pass": "#2E9E66",
+    "warn": "#C57524",
+    "fail": "#D54E62"
+  }
+}

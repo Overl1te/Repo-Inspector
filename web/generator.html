@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Repo Inspector - Generator</title>
-  <link rel="icon" type="image/png" href="./logo.png">
-  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Overl1te/CyberDeck/refs/heads/main/icon.png">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Overl1te/CyberDeck/refs/heads/main/icon.png">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body data-page="generator" data-lang="en">
@@ -16,7 +16,7 @@
         <a class="link" href="#" data-lang="ru">RU</a>
       </div>
       <p id="gen-kicker" class="kicker">EMBEDDABLE STATS</p>
-      <h1 id="gen-title">SVG/JSON generator</h1>
+      <h1 id="gen-title-heading">SVG/JSON generator</h1>
       <p id="gen-subtitle" class="muted">
         Build URL parameters visually, preview card, and copy URL/Markdown.
       </p>
@@ -51,66 +51,119 @@
         <option value="json">JSON</option>
       </select>
 
-      <label id="gen-theme-label" for="gen-theme">Theme</label>
-      <select id="gen-theme"></select>
-
-      <section id="gen-custom-theme-panel" class="custom-theme-panel hidden">
-        <h3 id="gen-custom-theme-title">Custom theme</h3>
-        <p id="gen-custom-theme-hint" class="muted custom-theme-hint">Adjust colors manually for SVG cards.</p>
-        <div class="custom-theme-grid">
-          <div class="custom-color-field"><label id="gen-color-label-bg_start" for="gen-color-bg_start">bg_start</label><input id="gen-color-bg_start" type="color" value="#F8FBFF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-bg_end" for="gen-color-bg_end">bg_end</label><input id="gen-color-bg_end" type="color" value="#EEF5FF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-border" for="gen-color-border">border</label><input id="gen-color-border" type="color" value="#A8CBFF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-panel" for="gen-color-panel">panel</label><input id="gen-color-panel" type="color" value="#FFFFFF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-overlay" for="gen-color-overlay">overlay</label><input id="gen-color-overlay" type="color" value="#EDF4FF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-chip_bg" for="gen-color-chip_bg">chip_bg</label><input id="gen-color-chip_bg" type="color" value="#E7F0FF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-chip_text" for="gen-color-chip_text">chip_text</label><input id="gen-color-chip_text" type="color" value="#2D4E83"></div>
-          <div class="custom-color-field"><label id="gen-color-label-text" for="gen-color-text">text</label><input id="gen-color-text" type="color" value="#14284B"></div>
-          <div class="custom-color-field"><label id="gen-color-label-muted" for="gen-color-muted">muted</label><input id="gen-color-muted" type="color" value="#3F6191"></div>
-          <div class="custom-color-field"><label id="gen-color-label-accent" for="gen-color-accent">accent</label><input id="gen-color-accent" type="color" value="#16A4E0"></div>
-          <div class="custom-color-field"><label id="gen-color-label-accent_2" for="gen-color-accent_2">accent_2</label><input id="gen-color-accent_2" type="color" value="#1AB9A2"></div>
-          <div class="custom-color-field"><label id="gen-color-label-accent_soft" for="gen-color-accent_soft">accent_soft</label><input id="gen-color-accent_soft" type="color" value="#B8DBFF"></div>
-          <div class="custom-color-field"><label id="gen-color-label-track" for="gen-color-track">track</label><input id="gen-color-track" type="color" value="#D3E3FB"></div>
-          <div class="custom-color-field"><label id="gen-color-label-pass" for="gen-color-pass">pass</label><input id="gen-color-pass" type="color" value="#0F7F39"></div>
-          <div class="custom-color-field"><label id="gen-color-label-warn" for="gen-color-warn">warn</label><input id="gen-color-warn" type="color" value="#B55A0C"></div>
-          <div class="custom-color-field"><label id="gen-color-label-fail" for="gen-color-fail">fail</label><input id="gen-color-fail" type="color" value="#BE1D2D"></div>
-        </div>
-      </section>
-
       <label id="gen-locale-label" for="gen-locale">Locale</label>
       <select id="gen-locale">
         <option value="en">en</option>
         <option value="ru">ru</option>
       </select>
 
-      <label id="gen-title-label" for="gen-custom-title">Custom title</label>
-      <input id="gen-custom-title" type="text" placeholder="Optional title">
+      <div id="gen-svg-only-controls">
+        <label id="gen-theme-label" for="gen-theme">Theme</label>
+        <select id="gen-theme"></select>
+        <button id="gen-theme-random" type="button" class="button secondary button-compact">Random theme</button>
 
-      <label id="gen-hide-label" for="gen-hide">Hide flags (comma-separated)</label>
-      <input id="gen-hide" type="text" placeholder="description,languages,footer">
+        <section id="gen-custom-theme-panel" class="custom-theme-panel hidden">
+          <h3 id="gen-custom-theme-title">Custom theme</h3>
+          <p id="gen-custom-theme-hint" class="muted custom-theme-hint">Adjust colors manually for SVG cards.</p>
+          <label id="gen-theme-preset-label" for="gen-theme-preset">Palette preset</label>
+          <select id="gen-theme-preset">
+            <option value="ocean">Ocean Breeze</option>
+            <option value="ember">Ember</option>
+            <option value="neon">Neon Pulse</option>
+            <option value="paper">Paper</option>
+            <option value="forest">Forest Ink</option>
+          </select>
+          <div class="generator-inline-actions">
+            <button id="gen-apply-preset" type="button" class="button secondary button-compact">Apply preset</button>
+            <button id="gen-randomize-palette" type="button" class="button secondary button-compact">Randomize</button>
+            <button id="gen-reset-palette" type="button" class="button secondary button-compact">Reset palette</button>
+          </div>
+          <div class="custom-theme-grid">
+            <div class="custom-color-field"><label id="gen-color-label-bg_start" for="gen-color-bg_start">bg_start</label><input id="gen-color-bg_start" type="color" value="#F8FBFF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-bg_end" for="gen-color-bg_end">bg_end</label><input id="gen-color-bg_end" type="color" value="#EEF5FF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-border" for="gen-color-border">border</label><input id="gen-color-border" type="color" value="#A8CBFF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-panel" for="gen-color-panel">panel</label><input id="gen-color-panel" type="color" value="#FFFFFF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-overlay" for="gen-color-overlay">overlay</label><input id="gen-color-overlay" type="color" value="#EDF4FF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-chip_bg" for="gen-color-chip_bg">chip_bg</label><input id="gen-color-chip_bg" type="color" value="#E7F0FF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-chip_text" for="gen-color-chip_text">chip_text</label><input id="gen-color-chip_text" type="color" value="#2D4E83"></div>
+            <div class="custom-color-field"><label id="gen-color-label-text" for="gen-color-text">text</label><input id="gen-color-text" type="color" value="#14284B"></div>
+            <div class="custom-color-field"><label id="gen-color-label-muted" for="gen-color-muted">muted</label><input id="gen-color-muted" type="color" value="#3F6191"></div>
+            <div class="custom-color-field"><label id="gen-color-label-accent" for="gen-color-accent">accent</label><input id="gen-color-accent" type="color" value="#16A4E0"></div>
+            <div class="custom-color-field"><label id="gen-color-label-accent_2" for="gen-color-accent_2">accent_2</label><input id="gen-color-accent_2" type="color" value="#1AB9A2"></div>
+            <div class="custom-color-field"><label id="gen-color-label-accent_soft" for="gen-color-accent_soft">accent_soft</label><input id="gen-color-accent_soft" type="color" value="#B8DBFF"></div>
+            <div class="custom-color-field"><label id="gen-color-label-track" for="gen-color-track">track</label><input id="gen-color-track" type="color" value="#D3E3FB"></div>
+            <div class="custom-color-field"><label id="gen-color-label-pass" for="gen-color-pass">pass</label><input id="gen-color-pass" type="color" value="#0F7F39"></div>
+            <div class="custom-color-field"><label id="gen-color-label-warn" for="gen-color-warn">warn</label><input id="gen-color-warn" type="color" value="#B55A0C"></div>
+            <div class="custom-color-field"><label id="gen-color-label-fail" for="gen-color-fail">fail</label><input id="gen-color-fail" type="color" value="#BE1D2D"></div>
+          </div>
+        </section>
 
-      <label id="gen-width-label" for="gen-width">Card width</label>
-      <input id="gen-width" type="number" min="640" max="1400" value="760">
+        <label id="gen-title-label" for="gen-title">Custom title</label>
+        <input id="gen-title" type="text" placeholder="Optional title">
 
-      <label id="gen-langs-label" for="gen-langs">Languages count (repo card)</label>
-      <input id="gen-langs" type="number" min="1" max="10" value="4">
+        <label id="gen-hide-label" for="gen-hide-panel">Hide flags</label>
+        <details id="gen-hide-panel" class="multi-select">
+          <summary class="multi-select-summary">
+            <span id="gen-hide-summary-text">None</span>
+          </summary>
+          <div class="multi-select-list">
+            <div class="multi-select-tools">
+              <button id="gen-hide-select-all" type="button" class="button secondary button-compact">Select all</button>
+              <button id="gen-hide-clear" type="button" class="button secondary button-compact">Clear</button>
+            </div>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="description" data-kinds="repo"> <span id="gen-hide-option-description">Description</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="languages" data-kinds="repo"> <span id="gen-hide-option-languages">Languages</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="meta" data-kinds="repo"> <span id="gen-hide-option-meta">Meta chips</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="stars" data-kinds="repo"> <span id="gen-hide-option-stars">Stars metric</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="forks" data-kinds="repo"> <span id="gen-hide-option-forks">Forks metric</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="issues" data-kinds="repo"> <span id="gen-hide-option-issues">Issues metric</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="watchers" data-kinds="repo"> <span id="gen-hide-option-watchers">Watchers metric</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="status" data-kinds="quality"> <span id="gen-hide-option-status">Status counters</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="lines" data-kinds="quality"> <span id="gen-hide-option-lines">Code metrics</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="stacks" data-kinds="quality"> <span id="gen-hide-option-stacks">Stacks row</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="commit" data-kinds="quality"> <span id="gen-hide-option-commit">Commit row</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="categories" data-kinds="quality"> <span id="gen-hide-option-categories">Categories bars</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="ring" data-kinds="quality"> <span id="gen-hide-option-ring">Score ring panel</span></label>
+            <label class="multi-select-option"><input class="gen-hide-option" type="checkbox" value="footer" data-kinds="repo,quality"> <span id="gen-hide-option-footer">Footer</span></label>
+          </div>
+        </details>
+        <input id="gen-hide" type="hidden" value="">
 
-      <label class="toggle">
-        <input id="gen-animate" type="checkbox" checked>
-        <span id="gen-animate-label">Enable animation</span>
-      </label>
+        <label id="gen-width-label" for="gen-width">Card width</label>
+        <input id="gen-width" type="number" min="640" max="1400" value="760">
 
-      <label id="gen-animation-label" for="gen-animation">Animation mode</label>
-      <select id="gen-animation">
-        <option value="all">all</option>
-        <option value="soft">soft</option>
-        <option value="bars">bars</option>
-        <option value="ring">ring</option>
-        <option value="none">none</option>
-      </select>
+        <label class="toggle">
+          <input id="gen-animate" type="checkbox" checked>
+          <span id="gen-animate-label">Enable animation</span>
+        </label>
 
-      <label id="gen-duration-label" for="gen-duration">Animation duration (ms)</label>
-      <input id="gen-duration" type="number" min="350" max="7000" value="1400">
+        <label id="gen-animation-label" for="gen-animation">Animation mode</label>
+        <select id="gen-animation">
+          <option value="all">all</option>
+          <option value="soft">soft</option>
+          <option value="bars">bars</option>
+          <option value="ring">ring</option>
+          <option value="none">none</option>
+        </select>
+
+        <label id="gen-duration-label" for="gen-duration">Animation duration (ms)</label>
+        <input id="gen-duration" type="number" min="350" max="7000" value="1400">
+
+        <label id="gen-cache-label" for="gen-cache-seconds">Cache seconds (SVG)</label>
+        <input id="gen-cache-seconds" type="number" min="0" max="86400" value="21600">
+      </div>
+
+      <div id="gen-repo-langs-group">
+        <label id="gen-langs-label" for="gen-langs">Languages count (repo card)</label>
+        <input id="gen-langs" type="number" min="1" max="10" value="4">
+      </div>
+
+      <div id="gen-quality-json-controls" class="hidden">
+        <label class="toggle">
+          <input id="gen-include-report" type="checkbox">
+          <span id="gen-include-report-label">Include detailed report</span>
+        </label>
+      </div>
     </section>
 
     <section class="card span-8 generator-preview">

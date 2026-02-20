@@ -1,10 +1,6 @@
 {
   "id": "ocean",
   "order": 10,
-  "label": {
-    "en": "Ocean",
-    "ru": "?????"
-  },
   "palette": {
     "bg_start": "#F8FBFF",
     "bg_end": "#EEF5FF",

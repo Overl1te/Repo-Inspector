@@ -1,0 +1,22 @@
+{
+  "id": "noir",
+  "order": 190,
+  "palette": {
+    "bg_start": "#0C0C0E",
+    "bg_end": "#17181C",
+    "border": "#3E4048",
+    "panel": "#15171C",
+    "overlay": "#101217",
+    "chip_bg": "#22252D",
+    "chip_text": "#E6E9EF",
+    "text": "#F5F7FB",
+    "muted": "#B7BEC9",
+    "accent": "#EEC643",
+    "accent_2": "#8BE9FD",
+    "accent_soft": "#363943",
+    "track": "#2F333C",
+    "pass": "#66D088",
+    "warn": "#F2C14E",
+    "fail": "#F07178"
+  }
+}

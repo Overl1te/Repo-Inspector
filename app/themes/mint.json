@@ -1,26 +1,22 @@
 {
   "id": "mint",
   "order": 110,
-  "label": {
-    "en": "Mint",
-    "ru": "????"
-  },
   "palette": {
-    "bg_start": "#ECFEFF",
-    "bg_end": "#DFFCF6",
-    "border": "#99F6E4",
-    "panel": "#F5FFFD",
-    "overlay": "#E7FBF7",
-    "chip_bg": "#D4F8EE",
-    "chip_text": "#0F5E59",
-    "text": "#133336",
-    "muted": "#2D666B",
-    "accent": "#14B8A6",
-    "accent_2": "#06B6D4",
-    "accent_soft": "#9AE7DC",
-    "track": "#C8ECE6",
-    "pass": "#15803D",
-    "warn": "#B45309",
-    "fail": "#BE123C"
+    "bg_start": "#0C1F1B",
+    "bg_end": "#123029",
+    "border": "#2E6C61",
+    "panel": "#15362F",
+    "overlay": "#102B25",
+    "chip_bg": "#1D4A40",
+    "chip_text": "#CFF7EE",
+    "text": "#E9FFF8",
+    "muted": "#A7D6CC",
+    "accent": "#2DD4BF",
+    "accent_2": "#34D399",
+    "accent_soft": "#24584D",
+    "track": "#2C6559",
+    "pass": "#4ADE80",
+    "warn": "#FBBF24",
+    "fail": "#F87171"
   }
 }

@@ -1,0 +1,22 @@
+{
+  "id": "arctic",
+  "order": 180,
+  "palette": {
+    "bg_start": "#0B1A26",
+    "bg_end": "#12283A",
+    "border": "#2F5C7A",
+    "panel": "#173246",
+    "overlay": "#102638",
+    "chip_bg": "#1E415A",
+    "chip_text": "#D3EEFF",
+    "text": "#EDF8FF",
+    "muted": "#A8D0E5",
+    "accent": "#33C7F7",
+    "accent_2": "#60A5FA",
+    "accent_soft": "#26506B",
+    "track": "#2E5875",
+    "pass": "#34D399",
+    "warn": "#FBBF24",
+    "fail": "#FB7185"
+  }
+}

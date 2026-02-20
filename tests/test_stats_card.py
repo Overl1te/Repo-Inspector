@@ -1,3 +1,5 @@
+import re
+
 from app.stats_card import build_quality_stats_svg, build_repo_stats_svg
 
 
@@ -40,6 +42,20 @@ def test_build_repo_stats_svg_renders_languages() -> None:
     assert "Shell" in svg
 
 
+def test_build_repo_stats_svg_formats_tiny_language_share_without_zero_percent() -> None:
+    payload = _payload()
+    repository = payload.get("repository")
+    assert isinstance(repository, dict)
+    repository["languages"] = [
+        {"name": "Dart", "bytes": 999},
+        {"name": "Kotlin", "bytes": 1},
+    ]
+    svg = build_repo_stats_svg(payload, theme="ocean", langs_count=2)
+    assert "Kotlin 0%" not in svg
+    assert "Kotlin 0.1%" in svg
+    assert "Dart 99.9%" in svg
+
+
 def test_build_repo_stats_svg_handles_missing_languages() -> None:
     payload = _payload()
     repository = payload.get("repository")
@@ -75,6 +91,12 @@ def test_repo_svg_animation_enabled() -> None:
     svg = build_repo_stats_svg(_payload(), animate=True, animation="bars", duration_ms=1800)
     assert "lang-seg" in svg
     assert "animation: grow" in svg
+
+
+def test_repo_svg_language_inner_segments_are_not_rounded() -> None:
+    svg = build_repo_stats_svg(_payload(), animate=True, animation="bars")
+    assert 'clip-path="url(#lang-clip-' in svg
+    assert re.search(r'class="lang-seg"[^>]*\\srx=', svg) is None
 
 
 def test_quality_svg_ring_animation_enabled() -> None:

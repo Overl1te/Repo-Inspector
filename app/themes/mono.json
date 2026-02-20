@@ -1,26 +1,22 @@
 {
   "id": "mono",
   "order": 130,
-  "label": {
-    "en": "Mono",
-    "ru": "????"
-  },
   "palette": {
-    "bg_start": "#FAFAFA",
-    "bg_end": "#F0F0F0",
-    "border": "#C4C4C4",
-    "panel": "#FFFFFF",
-    "overlay": "#F5F5F5",
-    "chip_bg": "#ECECEC",
-    "chip_text": "#3F3F46",
-    "text": "#18181B",
-    "muted": "#52525B",
-    "accent": "#52525B",
-    "accent_2": "#71717A",
-    "accent_soft": "#D4D4D8",
-    "track": "#E4E4E7",
-    "pass": "#166534",
-    "warn": "#92400E",
-    "fail": "#991B1B"
+    "bg_start": "#0F0F11",
+    "bg_end": "#1A1A1E",
+    "border": "#3A3A42",
+    "panel": "#1C1C21",
+    "overlay": "#141418",
+    "chip_bg": "#2A2A31",
+    "chip_text": "#E5E7EB",
+    "text": "#FAFAFA",
+    "muted": "#B8BBC4",
+    "accent": "#A1A1AA",
+    "accent_2": "#D4D4D8",
+    "accent_soft": "#32323A",
+    "track": "#3E3E47",
+    "pass": "#4ADE80",
+    "warn": "#FBBF24",
+    "fail": "#F87171"
   }
 }

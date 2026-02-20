@@ -1,10 +1,6 @@
 {
   "id": "forest",
   "order": 50,
-  "label": {
-    "en": "Forest",
-    "ru": "???"
-  },
   "palette": {
     "bg_start": "#EFFAF2",
     "bg_end": "#E0F5E7",

@@ -4,16 +4,18 @@ app:
   title_separator: "-"
 
 github:
-  token: ""
-  app_token: ""
+  token: ""        # optional, improves GitHub API rate limits
+  app_token: ""    # optional, preferred if you use GitHub App auth
   api_base: "https://api.github.com"
 
 database:
-  url: "sqlite:///./data/app.db"
+  url: "sqlite:///./data/app.db"   # local mode default
+  # For production (example):
+  # url: "postgresql+psycopg://user:password@host:5432/repo_inspector"
 
 scan:
   rate_limit_per_minute: 25
   daily_quota: 300
-  cache_ttl_seconds: 1800
-  repo_history_keep: 20
+  cache_ttl_seconds: 1800          # API/report cache TTL
+  repo_history_keep: 20            # number of reports kept per repository
   stale_active_job_minutes: 120

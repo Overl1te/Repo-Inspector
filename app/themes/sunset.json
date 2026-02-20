@@ -1,10 +1,6 @@
 {
   "id": "sunset",
   "order": 40,
-  "label": {
-    "en": "Sunset",
-    "ru": "?????"
-  },
   "palette": {
     "bg_start": "#FFF7ED",
     "bg_end": "#FFE7D1",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import time
 from collections import defaultdict, deque
@@ -27,7 +28,7 @@ from app.scanner.checks import detect_stacks, project_line_metrics, run_all_chec
 from app.scanner.i18n import get_client_i18n, get_ui_labels, localize_report, normalize_lang
 from app.scanner.policy import RepoPolicy, load_repo_policy
 from app.scanner.schemas import CategoryDeltaItem, CheckDeltaItem, CheckResult, ReportComparison
-from app.scanner.scoring import build_report
+from app.scanner.scoring import build_report, check_weight_map
 from app.stats_card import build_quality_stats_svg, build_repo_stats_svg
 from app.theme_store import THEME_KEYS, get_custom_theme_defaults, get_theme_options
 
@@ -49,9 +50,12 @@ app.add_middleware(
 
 _RATE_WINDOW_SECONDS = 60
 _REPO_STATS_CACHE_TTL_SECONDS = 300
+_QUALITY_LIVE_CACHE_TTL_SECONDS = 180
+_LIVE_SNAPSHOT_LINE_COUNT_FETCH_LIMIT = 120
 _scan_requests: dict[str, deque[float]] = defaultdict(deque)
 _scan_daily_usage: dict[str, tuple[date, int]] = {}
 _repo_stats_cache: dict[str, tuple[float, RepoPublicStats]] = {}
+_quality_live_cache: dict[str, tuple[float, dict[str, object]]] = {}
 _started_at = time.time()
 _metrics: dict[str, float] = {
     "http_requests_total": 0,
@@ -62,6 +66,11 @@ _metrics: dict[str, float] = {
     "scan_jobs_cached_total": 0,
     "github_api_errors_total": 0,
 }
+_PAGES_HOME_URL = os.getenv("RQI_PUBLIC_WEB_URL", "https://overl1te.github.io/Repo-Inspector/")
+_PAGES_GENERATOR_URL = os.getenv(
+    "RQI_PUBLIC_GENERATOR_URL",
+    f"{_PAGES_HOME_URL.rstrip('/')}/generator.html",
+)
 
 
 class ScanRequest(BaseModel):
@@ -125,9 +134,101 @@ def site_template_context() -> dict[str, str]:
     }
 
 
+def _is_vercel_runtime() -> bool:
+    return bool(os.getenv("VERCEL"))
+
+
+def _lang_url(url: str, lang: str) -> str:
+    separator = "&" if "?" in url else "?"
+    return f"{url}{separator}lang={lang}"
+
+
+def _backend_landing_page(lang: str) -> str:
+    home_url = _lang_url(_PAGES_HOME_URL, lang)
+    generator_url = _lang_url(_PAGES_GENERATOR_URL, lang)
+    return f"""<!doctype html>
+<html lang="{lang}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{settings.app_name} - API endpoint</title>
+  <meta http-equiv="refresh" content="3; url={generator_url}">
+  <style>
+    :root {{
+      color-scheme: light;
+      --bg: #f6f9ff;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+      --line: #dbeafe;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(900px 400px at 50% -10%, #dbeafe 0%, transparent 65%), var(--bg);
+      font-family: "Segoe UI", sans-serif;
+      color: var(--text);
+      padding: 1rem;
+    }}
+    .card {{
+      max-width: 620px;
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.15rem;
+      box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+    }}
+    h1 {{
+      margin: 0 0 0.5rem;
+      font-size: 1.28rem;
+    }}
+    p {{
+      margin: 0 0 0.64rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }}
+    .actions {{
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-top: 0.9rem;
+    }}
+    a {{
+      display: inline-block;
+      padding: 0.56rem 0.9rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      color: var(--accent);
+      background: #eff6ff;
+    }}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>{settings.app_name} backend</h1>
+    <p>This domain serves API only.</p>
+    <p>Open the web app and generator on GitHub Pages.</p>
+    <div class="actions">
+      <a href="{home_url}">Open web app</a>
+      <a href="{generator_url}">Open generator</a>
+    </div>
+  </main>
+</body>
+</html>"""
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, lang: str = "en") -> HTMLResponse:
     lang = normalize_lang(lang)
+    if _is_vercel_runtime():
+        return HTMLResponse(content=_backend_landing_page(lang))
     return templates.TemplateResponse(
         "index.html",
         {
@@ -143,6 +244,8 @@ async def index(request: Request, lang: str = "en") -> HTMLResponse:
 @app.get("/generator", response_class=HTMLResponse)
 async def svg_generator(request: Request, lang: str = "en") -> HTMLResponse:
     lang = normalize_lang(lang)
+    if _is_vercel_runtime():
+        return RedirectResponse(url=_lang_url(_PAGES_GENERATOR_URL, lang), status_code=307)
     ui = get_ui_labels(lang)
     themes = get_theme_options(ui)
     return templates.TemplateResponse(
@@ -958,14 +1061,30 @@ async def _build_live_quality_snapshot(
 ) -> dict[str, object]:
     """Compute quality snapshot on demand without persisted scan history."""
 
+    cache_key = (
+        f"{owner.strip().lower()}/{repo.strip().lower()}"
+        f"/report={1 if include_report else 0}"
+    )
+    cached_entry = _quality_live_cache.get(cache_key)
+    cached_payload = cached_entry[1] if cached_entry else None
+    if cached_entry and (time.time() - cached_entry[0]) <= _QUALITY_LIVE_CACHE_TTL_SECONDS:
+        return json.loads(json.dumps(cached_entry[1]))
+
     client = GitHubClient()
     try:
-        snapshot = await client.get_repo_snapshot(owner, repo)
+        line_count_fetch_limit = None if include_report else _LIVE_SNAPSHOT_LINE_COUNT_FETCH_LIMIT
+        snapshot = await client.get_repo_snapshot(
+            owner,
+            repo,
+            line_count_fetch_limit=line_count_fetch_limit,
+        )
     except GitHubAPIError as exc:
+        if isinstance(cached_payload, dict):
+            return json.loads(json.dumps(cached_payload))
         raise _github_error_to_http(exc) from exc
 
     policy = load_repo_policy(snapshot)
-    checks = run_all_checks(snapshot, enable_network=True, policy=policy)
+    checks = run_all_checks(snapshot, enable_network=False, policy=policy)
     stacks = detect_stacks(snapshot)
     metrics = project_line_metrics(snapshot)
     report = build_report(
@@ -1011,7 +1130,8 @@ async def _build_live_quality_snapshot(
     }
     if include_report:
         result["report"] = report_payload
-    return result
+    _quality_live_cache[cache_key] = (time.time(), result)
+    return json.loads(json.dumps(result))
 
 
 def _serialize_repo_stats(repo_stats: RepoPublicStats) -> dict[str, object]:
@@ -1512,7 +1632,14 @@ def _flatten_checks(categories: dict[object, object]) -> dict[str, dict[str, Any
         if not isinstance(category_id, str) or not isinstance(category, dict):
             continue
         checks = _as_list(category.get("checks"))
-        weight = int(category.get("weight", 0)) / max(len(checks), 1)
+        check_ids: list[str] = []
+        for check in checks:
+            if not isinstance(check, dict):
+                continue
+            check_id = check.get("id")
+            if isinstance(check_id, str):
+                check_ids.append(check_id)
+        weight_map = check_weight_map(category_id, int(category.get("weight", 0)), check_ids)
         for check in checks:
             if not isinstance(check, dict):
                 continue
@@ -1526,7 +1653,7 @@ def _flatten_checks(categories: dict[object, object]) -> dict[str, dict[str, Any
                 "check_id": check_id,
                 "check_name": str(check.get("name", check_id)),
                 "status": status,
-                "weight": weight,
+                "weight": weight_map.get(check_id, 0.0),
             }
     return flat
 

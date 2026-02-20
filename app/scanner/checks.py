@@ -17,15 +17,38 @@ from app.scanner.schemas import CheckResult, ExtensionMetric, ProjectMetrics
 
 PINNED_SHA_RE = re.compile(r"^[a-fA-F0-9]{40}$")
 USES_RE = re.compile(r"uses:\s*([A-Za-z0-9_.\-\/]+)@([^\s#]+)")
+EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 SECRET_PATTERNS = {
     "AWS Access Key": re.compile(r"AKIA[0-9A-Z]{16}"),
     "GitHub Token": re.compile(r"ghp_[A-Za-z0-9]{20,}"),
     "Google API Key": re.compile(r"AIza[0-9A-Za-z\-_]{20,}"),
 }
+CHANGELOG_FILENAMES = {"changelog.md", "changes.md", "history.md", "releases.md"}
+TEST_EXECUTION_KEYWORDS = (
+    "pytest",
+    "npm test",
+    "yarn test",
+    "pnpm test",
+    "vitest",
+    "jest",
+    "dotnet test",
+    "mvn test",
+    "gradle test",
+    "go test",
+    "cargo test",
+    "flutter test",
+)
 
 OSV_QUERY_URL = "https://api.osv.dev/v1/querybatch"
 MAX_DEPENDENCIES_FOR_OSV = 200
 OSV_BATCH_SIZE = 100
+EXTENSIONLESS_CODE_FILES = {
+    "dockerfile",
+    "makefile",
+    "cmakelists.txt",
+    "jenkinsfile",
+    "justfile",
+}
 
 
 @dataclass(frozen=True)
@@ -50,12 +73,30 @@ def detect_stacks(snapshot: Any) -> list[str]:
     """Infer primary technology stacks from repository tree."""
 
     tree = [path.lower() for path in snapshot.tree_paths]
+    filenames = [path.split("/")[-1] for path in tree]
     stacks: list[str] = []
 
     if any(path.endswith((".py", "pyproject.toml", "requirements.txt", "poetry.lock")) for path in tree):
         stacks.append("python")
+    if any(path.endswith((".html", ".htm")) for path in tree):
+        stacks.append("html")
+    if any(path.endswith((".css", ".scss", ".sass", ".less")) for path in tree):
+        stacks.append("css")
+    if any(path.endswith((".ts", ".tsx", ".mts", ".cts", "tsconfig.json")) for path in tree):
+        stacks.append("typescript")
     if any(
-        path.endswith(("package.json", "pnpm-lock.yaml", "yarn.lock", "package-lock.json"))
+        path.endswith(
+            (
+                "package.json",
+                "pnpm-lock.yaml",
+                "yarn.lock",
+                "package-lock.json",
+                ".js",
+                ".jsx",
+                ".mjs",
+                ".cjs",
+            )
+        )
         for path in tree
     ):
         stacks.append("javascript")
@@ -63,7 +104,9 @@ def detect_stacks(snapshot: Any) -> list[str]:
         stacks.append("java")
     if any(path.endswith((".csproj", ".sln", "directory.build.props")) for path in tree):
         stacks.append("csharp")
-    if any(path.endswith((".cpp", ".cc", ".cxx", ".h", ".hpp", "cmakelists.txt")) for path in tree):
+    if any(path.endswith((".c",)) for path in tree):
+        stacks.append("c")
+    if any(path.endswith((".cpp", ".cc", ".cxx", ".hpp", ".hh", ".hxx", "cmakelists.txt")) for path in tree):
         stacks.append("cpp")
     if any(path.endswith(("go.mod", ".go")) for path in tree):
         stacks.append("go")
@@ -73,6 +116,48 @@ def detect_stacks(snapshot: Any) -> list[str]:
         stacks.append("php")
     if any(path.endswith(("gemfile", "gemfile.lock", ".rb")) for path in tree):
         stacks.append("ruby")
+    if any(path.endswith(("pubspec.yaml", "pubspec.lock", ".dart")) for path in tree):
+        stacks.append("dart")
+    if any(path.endswith((".kt", ".kts")) for path in tree):
+        stacks.append("kotlin")
+    if any(path.endswith(("package.swift", ".swift")) for path in tree):
+        stacks.append("swift")
+    if any(path.endswith((".m", ".mm")) for path in tree):
+        stacks.append("objective-c")
+    if any(path.endswith((".fs", ".fsi", ".fsx")) for path in tree):
+        stacks.append("fsharp")
+    if any(path.endswith((".pl", ".pm")) for path in tree):
+        stacks.append("perl")
+    if any(path.endswith((".scala", ".sbt", ".sc")) for path in tree):
+        stacks.append("scala")
+    if any(path.endswith((".sql",)) for path in tree):
+        stacks.append("sql")
+    if any(path.endswith((".sh", ".bash", ".zsh", ".fish")) for path in tree):
+        stacks.append("shell")
+    if any(path.endswith((".ps1", ".psm1", ".psd1")) for path in tree):
+        stacks.append("powershell")
+    if any(path.endswith((".lua",)) for path in tree):
+        stacks.append("lua")
+    if any(path.endswith((".r", ".rmd")) for path in tree):
+        stacks.append("r")
+    if any(path.endswith((".jl",)) for path in tree):
+        stacks.append("julia")
+    if any(path.endswith((".clj", ".cljs", ".cljc")) for path in tree):
+        stacks.append("clojure")
+    if any(path.endswith((".ex", ".exs")) for path in tree):
+        stacks.append("elixir")
+    if any(path.endswith((".hs",)) for path in tree):
+        stacks.append("haskell")
+    if any(path.endswith((".nim",)) for path in tree):
+        stacks.append("nim")
+    if any(path.endswith((".zig",)) for path in tree):
+        stacks.append("zig")
+    if any(path.endswith((".sol",)) for path in tree):
+        stacks.append("solidity")
+    if any(path.endswith((".tf", ".hcl")) for path in tree):
+        stacks.append("terraform")
+    if any(name.startswith("dockerfile") for name in filenames):
+        stacks.append("docker")
     if not stacks:
         stacks.append("unknown")
     return stacks
@@ -160,6 +245,62 @@ def docs_checks(snapshot: Any, readme_min_length: int = 200) -> list[CheckResult
             status="pass" if snapshot.has_license else "warn",
             details="License detected." if snapshot.has_license else "No license metadata found via API.",
             recommendation=None if snapshot.has_license else "Add a LICENSE file and set repository license.",
+        )
+    )
+
+    changelog_path = _find_first_path(
+        tree_paths,
+        lambda p: p.split("/")[-1] in CHANGELOG_FILENAMES,
+    )
+    checks.append(
+        CheckResult(
+            id="changelog_exists",
+            name="Changelog file exists",
+            status="pass" if changelog_path else "warn",
+            details=f"Found at {changelog_path}" if changelog_path else "No CHANGELOG/CHANGES file found.",
+            recommendation=None if changelog_path else "Add CHANGELOG.md to document notable releases.",
+        )
+    )
+
+    has_docs_dir = any(path.lower().startswith(("docs/", "doc/")) for path in tree_paths)
+    checks.append(
+        CheckResult(
+            id="docs_dir_exists",
+            name="Dedicated docs directory exists",
+            status="pass" if has_docs_dir else "warn",
+            details="Found docs/ directory." if has_docs_dir else "No docs/ directory found.",
+            recommendation=None if has_docs_dir else "Add docs/ with architecture, API, and usage details.",
+        )
+    )
+
+    readme_lower = readme_content.lower()
+    usage_markers = (
+        "usage",
+        "quick start",
+        "getting started",
+        "installation",
+        "install",
+        "how to run",
+        "использование",
+        "быстрый старт",
+        "установка",
+    )
+    has_usage_section = bool(readme_path) and any(marker in readme_lower for marker in usage_markers)
+    checks.append(
+        CheckResult(
+            id="readme_usage_section",
+            name="README contains usage/setup guidance",
+            status="pass" if has_usage_section else "warn",
+            details=(
+                "Found usage/setup section in README."
+                if has_usage_section
+                else "README does not clearly describe usage/setup steps."
+            ),
+            recommendation=(
+                None
+                if has_usage_section
+                else "Add 'Usage' or 'Getting Started' section with runnable setup instructions."
+            ),
         )
     )
     return checks
@@ -266,6 +407,74 @@ def ci_checks(snapshot: Any) -> list[CheckResult]:
             ),
         )
     )
+
+    if not has_workflows:
+        yaml_status = "warn"
+        yaml_details = "Workflow YAML validation skipped because no workflows were found."
+        yaml_rec = "Add workflow files in .github/workflows."
+    elif parse_errors:
+        yaml_status = "warn"
+        yaml_details = f"Found {parse_errors} workflow file(s) with YAML parsing issues."
+        yaml_rec = "Fix YAML syntax errors in workflow files."
+    else:
+        yaml_status = "pass"
+        yaml_details = "Workflow YAML parsed successfully."
+        yaml_rec = None
+    checks.append(
+        CheckResult(
+            id="workflow_yaml_valid",
+            name="Workflow YAML is valid",
+            status=yaml_status,  # type: ignore[arg-type]
+            details=yaml_details,
+            recommendation=yaml_rec,
+        )
+    )
+
+    cache_markers = (
+        "actions/cache@",
+        "cache: pip",
+        "cache: npm",
+        "cache: yarn",
+        "cache: pnpm",
+        "cache: gradle",
+        "cache: maven",
+        "cache-dependency-path",
+    )
+    has_ci_cache = any(marker in combined for marker in cache_markers)
+    checks.append(
+        CheckResult(
+            id="ci_cache_configured",
+            name="CI dependency cache configured",
+            status="pass" if has_ci_cache else "warn",
+            details=(
+                "Detected caching directives in workflows."
+                if has_ci_cache
+                else "No dependency cache configuration found in workflows."
+            ),
+            recommendation=(
+                None
+                if has_ci_cache
+                else "Enable dependency caching in CI to reduce runtime and flaky installs."
+            ),
+        )
+    )
+
+    has_timeout = "timeout-minutes:" in combined
+    checks.append(
+        CheckResult(
+            id="workflow_timeouts",
+            name="Workflow jobs define timeout limits",
+            status="pass" if has_timeout else "warn",
+            details=(
+                "Detected timeout-minutes in workflows."
+                if has_timeout
+                else "No timeout-minutes found in workflows."
+            ),
+            recommendation=(
+                None if has_timeout else "Set timeout-minutes for long-running CI jobs."
+            ),
+        )
+    )
     return checks
 
 
@@ -277,6 +486,8 @@ def quality_checks(snapshot: Any) -> list[CheckResult]:
     pyproject_content = snapshot.file_contents.get(pyproject_path, "") if pyproject_path else ""
     package_json_path = next((p for p in snapshot.tree_paths if p.lower().endswith("package.json")), None)
     package_json_content = snapshot.file_contents.get(package_json_path, "") if package_json_path else ""
+    pubspec_path = next((p for p in snapshot.tree_paths if p.lower().endswith("pubspec.yaml")), None)
+    pubspec_content = snapshot.file_contents.get(pubspec_path, "") if pubspec_path else ""
     java_build_paths = []
     for path in snapshot.tree_paths:
         if path.lower().endswith(("pom.xml", "build.gradle", "build.gradle.kts")):
@@ -321,10 +532,22 @@ def quality_checks(snapshot: Any) -> list[CheckResult]:
     has_cs_lint = any(
         path.endswith(("stylecop.json", ".ruleset", "directory.build.props")) for path in tree_paths_lower
     )
+    has_dart_lint = any(path.endswith("analysis_options.yaml") for path in tree_paths_lower) or any(
+        marker in pubspec_content.lower()
+        for marker in ("flutter_lints", "package:lints", "dart_code_metrics")
+    )
     has_generic_lint_file = any(path.split("/")[-1] in lint_config_filenames for path in tree_paths_lower)
 
     has_lint_config = any(
-        [has_py_lint, has_js_lint, has_java_lint, has_cpp_lint, has_cs_lint, has_generic_lint_file]
+        [
+            has_py_lint,
+            has_js_lint,
+            has_java_lint,
+            has_cpp_lint,
+            has_cs_lint,
+            has_dart_lint,
+            has_generic_lint_file,
+        ]
     )
 
     test_dir_markers = ("tests/", "test/", "__tests__/", "spec/")
@@ -342,19 +565,46 @@ def quality_checks(snapshot: Any) -> list[CheckResult]:
         ".cxx",
         ".go",
         ".rb",
+        ".php",
+        ".rs",
+        ".swift",
+        ".kt",
+        ".kts",
+        ".dart",
     )
     has_test_files = any(
-        ("test" in path.split("/")[-1] or path.split("/")[-1].endswith((".spec.js", ".spec.ts")))
+        (
+            "test" in path.split("/")[-1]
+            or path.split("/")[-1].endswith(
+                (".spec.js", ".spec.ts", ".spec.jsx", ".spec.tsx", ".spec.dart", "_test.dart")
+            )
+        )
         and path.endswith(test_file_exts)
         for path in tree_paths_lower
     )
     has_test_config = any(
-        path.endswith(("jest.config.js", "jest.config.ts", "vitest.config.ts", "pytest.ini", "phpunit.xml"))
+        path.endswith(
+            (
+                "jest.config.js",
+                "jest.config.ts",
+                "vitest.config.ts",
+                "pytest.ini",
+                "phpunit.xml",
+                "dart_test.yaml",
+            )
+        )
         for path in tree_paths_lower
     )
-    has_tests = has_tests_dir or has_test_files or has_test_config
+    has_flutter_test_dependency = "flutter_test" in pubspec_content.lower()
+    has_tests = has_tests_dir or has_test_files or has_test_config or has_flutter_test_dependency
+    has_editorconfig = any(path.endswith(".editorconfig") for path in tree_paths_lower)
+    workflow_combined = "\n".join(
+        snapshot.file_contents.get(path, "")
+        for path in snapshot.workflow_paths
+    ).lower()
+    has_tests_in_ci = any(keyword in workflow_combined for keyword in TEST_EXECUTION_KEYWORDS)
 
-    return [
+    checks = [
         CheckResult(
             id="lint_config",
             name="Linter/formatter config exists",
@@ -371,17 +621,44 @@ def quality_checks(snapshot: Any) -> list[CheckResult]:
             ),
         ),
         CheckResult(
+            id="editorconfig_exists",
+            name=".editorconfig exists",
+            status="pass" if has_editorconfig else "warn",
+            details=".editorconfig found." if has_editorconfig else ".editorconfig not found.",
+            recommendation=None if has_editorconfig else "Add .editorconfig for consistent editor settings.",
+        ),
+        CheckResult(
             id="tests_exist",
             name="Tests exist",
             status="pass" if has_tests else "warn",
             details=(
                 "Tests detected in repository."
                 if has_tests
-                else "No tests/ folder or test_*.py files found."
+                else "No tests directory or recognizable test files found."
             ),
-            recommendation=None if has_tests else "Add automated tests (tests/ or test_*.py).",
+            recommendation=(
+                None
+                if has_tests
+                else "Add automated tests (for example tests/ and language-specific test files)."
+            ),
+        ),
+        CheckResult(
+            id="tests_run_in_ci",
+            name="Tests are executed in CI",
+            status="pass" if has_tests_in_ci else "warn",
+            details=(
+                "Detected test execution commands in workflows."
+                if has_tests_in_ci
+                else "No recognizable test command found in workflow files."
+            ),
+            recommendation=(
+                None
+                if has_tests_in_ci
+                else "Add a test step in CI workflow (pytest/npm test/go test/etc)."
+            ),
         ),
     ]
+    return checks
 
 
 def security_checks(
@@ -446,7 +723,14 @@ def security_checks(
         secret_details = "No predefined secret patterns detected in scanned files."
         secret_rec = None
 
-    lockfile_names = {"requirements.txt", "poetry.lock", "package-lock.json", "pnpm-lock.yaml", "cargo.lock"}
+    lockfile_names = {
+        "requirements.txt",
+        "poetry.lock",
+        "package-lock.json",
+        "pnpm-lock.yaml",
+        "cargo.lock",
+        "pubspec.lock",
+    }
     has_lockfile = any(path.lower().split("/")[-1] in lockfile_names for path in snapshot.tree_paths)
     has_dependabot = any(path.lower() == ".github/dependabot.yml" for path in snapshot.tree_paths)
     if has_lockfile and has_dependabot:
@@ -461,6 +745,54 @@ def security_checks(
         dep_status = "warn"
         dep_details = "No dependency lockfile or dependabot config detected."
         dep_rec = "Add lockfiles and enable dependency update automation."
+
+    workflow_permissions_missing = 0
+    for content in workflow_contents:
+        if content.strip() and "permissions:" not in content.lower():
+            workflow_permissions_missing += 1
+    if not snapshot.workflow_paths:
+        permissions_status = "warn"
+        permissions_details = "No workflows found, permissions check skipped."
+        permissions_rec = "When adding workflows, declare explicit permissions: blocks."
+    elif workflow_permissions_missing:
+        permissions_status = "warn"
+        permissions_details = (
+            f"{workflow_permissions_missing} workflow file(s) do not define explicit permissions."
+        )
+        permissions_rec = "Declare least-privilege permissions: for all GitHub Actions workflows."
+    else:
+        permissions_status = "pass"
+        permissions_details = "All workflow files define explicit permissions."
+        permissions_rec = None
+
+    security_path = _find_first_path(snapshot.tree_paths, lambda p: p.split("/")[-1] == "security.md")
+    security_content = snapshot.file_contents.get(security_path, "") if security_path else ""
+    has_security_contact = bool(EMAIL_RE.search(security_content)) or any(
+        marker in security_content.lower()
+        for marker in (
+            "contact",
+            "report",
+            "vulnerability",
+            "security@",
+            "responsible disclosure",
+            "контакт",
+            "сообщ",
+            "уязвим",
+            "безопас",
+        )
+    )
+    if not security_path:
+        contact_status = "warn"
+        contact_details = "SECURITY.md not found; no disclosure contact information."
+        contact_rec = "Add SECURITY.md with vulnerability reporting process and contact channel."
+    elif has_security_contact:
+        contact_status = "pass"
+        contact_details = "Security policy includes reporting instructions/contact details."
+        contact_rec = None
+    else:
+        contact_status = "warn"
+        contact_details = "SECURITY.md exists but does not clearly provide contact/reporting details."
+        contact_rec = "Add explicit contact/reporting instructions in SECURITY.md."
 
     vulnerability_check = dependency_vulnerability_check(snapshot, enable_network=enable_network)
     return [
@@ -485,6 +817,20 @@ def security_checks(
             details=dep_details,
             recommendation=dep_rec,
         ),
+        CheckResult(
+            id="workflow_permissions",
+            name="Workflows declare explicit permissions",
+            status=permissions_status,  # type: ignore[arg-type]
+            details=permissions_details,
+            recommendation=permissions_rec,
+        ),
+        CheckResult(
+            id="security_contact",
+            name="Security contact/reporting details available",
+            status=contact_status,  # type: ignore[arg-type]
+            details=contact_details,
+            recommendation=contact_rec,
+        ),
         vulnerability_check,
     ]
 
@@ -505,9 +851,9 @@ def dependency_vulnerability_check(snapshot: Any, enable_network: bool) -> Check
         return CheckResult(
             id="dependency_vulnerabilities",
             name="Known vulnerabilities in dependencies",
-            status="warn",
+            status="pass",
             details="Vulnerability scan skipped (network disabled).",
-            recommendation="Run scan with network access to query OSV database.",
+            recommendation=None,
         )
 
     try:
@@ -564,6 +910,10 @@ def extract_dependency_refs(snapshot: Any) -> list[DependencyRef]:
             refs.update(_parse_cargo_lock(content))
         elif filename == "composer.lock":
             refs.update(_parse_composer_lock(content))
+        elif filename == "pubspec.lock":
+            refs.update(_parse_pubspec_lock(content))
+        elif filename == "pubspec.yaml":
+            refs.update(_parse_pubspec_yaml(content))
     ref_list = sorted(refs, key=lambda item: (item.ecosystem, item.name, item.version))
     return ref_list[:MAX_DEPENDENCIES_FOR_OSV]
 
@@ -648,6 +998,47 @@ def maintenance_checks(snapshot: Any, stale_days: int = 180) -> list[CheckResult
             recommendation=recommendation,
         )
     )
+
+    has_support_doc = any(
+        path.lower().split("/")[-1] in {"support.md", "maintainers.md", "maintainer.md"}
+        for path in snapshot.tree_paths
+    )
+    checks.append(
+        CheckResult(
+            id="support_docs",
+            name="Support/maintainers document exists",
+            status="pass" if has_support_doc else "warn",
+            details=(
+                "Support/maintainers document found."
+                if has_support_doc
+                else "No SUPPORT.md or MAINTAINERS.md found."
+            ),
+            recommendation=(
+                None
+                if has_support_doc
+                else "Add SUPPORT.md or MAINTAINERS.md with maintenance ownership/contact."
+            ),
+        )
+    )
+
+    has_changelog = any(path.lower().split("/")[-1] in CHANGELOG_FILENAMES for path in snapshot.tree_paths)
+    checks.append(
+        CheckResult(
+            id="release_notes_file",
+            name="Release notes/changelog file exists",
+            status="pass" if has_changelog else "warn",
+            details=(
+                "Changelog/release notes file found."
+                if has_changelog
+                else "No changelog/release notes file found."
+            ),
+            recommendation=(
+                None
+                if has_changelog
+                else "Maintain CHANGELOG.md to record release notes and breaking changes."
+            ),
+        )
+    )
     return checks
 
 
@@ -663,6 +1054,8 @@ def governance_checks(snapshot: Any) -> list[CheckResult]:
     )
     has_issue_template = any(path.startswith(".github/issue_template/") for path in lower_paths)
     has_security_policy = any(path.endswith("security.md") for path in lower_paths)
+    has_code_of_conduct = any(path.endswith("code_of_conduct.md") for path in lower_paths)
+    has_funding = any(path == ".github/funding.yml" for path in lower_paths)
 
     return [
         CheckResult(
@@ -692,6 +1085,26 @@ def governance_checks(snapshot: Any) -> list[CheckResult]:
             status="pass" if has_security_policy else "warn",
             details="SECURITY.md found." if has_security_policy else "SECURITY.md not found.",
             recommendation=None if has_security_policy else "Add SECURITY.md with disclosure process.",
+        ),
+        CheckResult(
+            id="code_of_conduct_exists",
+            name="Code of Conduct exists",
+            status="pass" if has_code_of_conduct else "warn",
+            details="CODE_OF_CONDUCT found." if has_code_of_conduct else "CODE_OF_CONDUCT.md not found.",
+            recommendation=(
+                None
+                if has_code_of_conduct
+                else "Add CODE_OF_CONDUCT.md to define expected community behavior."
+            ),
+        ),
+        CheckResult(
+            id="funding_config_exists",
+            name="Funding configuration exists",
+            status="pass" if has_funding else "warn",
+            details=".github/FUNDING.yml found." if has_funding else "Funding configuration not found.",
+            recommendation=(
+                None if has_funding else "Optionally add .github/FUNDING.yml for sponsorship/donation links."
+            ),
         ),
     ]
 
@@ -898,6 +1311,66 @@ def _parse_composer_lock(content: str) -> set[DependencyRef]:
     return refs
 
 
+def _parse_pubspec_lock(content: str) -> set[DependencyRef]:
+    refs: set[DependencyRef] = set()
+    try:
+        payload = yaml.safe_load(content) or {}
+    except yaml.YAMLError:
+        return refs
+    if not isinstance(payload, dict):
+        return refs
+    packages = payload.get("packages")
+    if not isinstance(packages, dict):
+        return refs
+    for name, item in packages.items():
+        if not isinstance(name, str) or not isinstance(item, dict):
+            continue
+        version = item.get("version")
+        if isinstance(version, str) and _looks_like_version(version):
+            refs.add(DependencyRef(ecosystem="Pub", name=name, version=version.strip()))
+    return refs
+
+
+def _parse_pubspec_yaml(content: str) -> set[DependencyRef]:
+    refs: set[DependencyRef] = set()
+    try:
+        payload = yaml.safe_load(content) or {}
+    except yaml.YAMLError:
+        return refs
+    if not isinstance(payload, dict):
+        return refs
+    for section in ("dependencies", "dev_dependencies"):
+        dependencies = payload.get(section, {})
+        if not isinstance(dependencies, dict):
+            continue
+        for name, raw_version in dependencies.items():
+            if not isinstance(name, str):
+                continue
+            version = _extract_pubspec_version(raw_version)
+            if version:
+                refs.add(DependencyRef(ecosystem="Pub", name=name, version=version))
+    return refs
+
+
+def _extract_pubspec_version(raw_version: Any) -> str | None:
+    if isinstance(raw_version, str):
+        candidate = raw_version.strip()
+        if not candidate:
+            return None
+        normalized = candidate.lstrip("^~").strip()
+        return normalized if _looks_like_version(normalized) else None
+    if isinstance(raw_version, dict):
+        nested = raw_version.get("version")
+        if isinstance(nested, str):
+            normalized = nested.strip().lstrip("^~").strip()
+            return normalized if _looks_like_version(normalized) else None
+    return None
+
+
+def _looks_like_version(value: str) -> bool:
+    return bool(re.match(r"^\d+(\.\d+){0,3}([\-+][A-Za-z0-9.\-]+)?$", value))
+
+
 def _safe_json_load(content: str) -> Any:
     try:
         return json.loads(content)
@@ -916,5 +1389,10 @@ def _count_lines(content: str) -> int:
 
 def _extension(path: str) -> str:
     lower = path.lower()
-    idx = lower.rfind(".")
-    return lower[idx:] if idx >= 0 else "no_ext"
+    filename = lower.split("/")[-1]
+    idx = filename.rfind(".")
+    if idx >= 0:
+        return filename[idx:]
+    if filename in EXTENSIONLESS_CODE_FILES:
+        return filename
+    return filename or "no_ext"

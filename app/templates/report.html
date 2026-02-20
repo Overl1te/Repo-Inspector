@@ -180,9 +180,24 @@
       </div>
       <ul class="checks">
         {% for item in report.project_metrics.by_extension %}
+        {% set ext = item.extension %}
+        {% set ext_label = ext %}
+        {% if ext == "dockerfile" %}
+          {% set ext_label = "Dockerfile" %}
+        {% elif ext == "makefile" %}
+          {% set ext_label = "Makefile" %}
+        {% elif ext == "cmakelists.txt" %}
+          {% set ext_label = "CMakeLists.txt" %}
+        {% elif ext == "jenkinsfile" %}
+          {% set ext_label = "Jenkinsfile" %}
+        {% elif ext == "justfile" %}
+          {% set ext_label = "Justfile" %}
+        {% elif ext == "no_ext" %}
+          {% set ext_label = "no extension" %}
+        {% endif %}
         <li class="check-item">
-          <span class="pill">{{ item.extension }}</span>
-          <div>
+          <span class="pill lines-ext-pill">{{ ext_label }}</span>
+          <div class="lines-metrics">
             <p class="check-name">{{ item.lines }} {{ ui.lines_word }}</p>
             <p class="muted">{{ item.files }} {{ ui.files_word }}</p>
           </div>

@@ -1,26 +1,22 @@
 {
   "id": "lavender",
   "order": 100,
-  "label": {
-    "en": "Lavender",
-    "ru": "???????"
-  },
   "palette": {
-    "bg_start": "#F6F3FF",
-    "bg_end": "#EDE9FE",
-    "border": "#C4B5FD",
-    "panel": "#FBFAFF",
-    "overlay": "#F1EEFF",
-    "chip_bg": "#E6E0FF",
-    "chip_text": "#4C3F9C",
-    "text": "#272356",
-    "muted": "#5F5B87",
-    "accent": "#8B5CF6",
-    "accent_2": "#6366F1",
-    "accent_soft": "#D2C7FB",
-    "track": "#DFD8F5",
-    "pass": "#15803D",
-    "warn": "#B45309",
-    "fail": "#BE123C"
+    "bg_start": "#171428",
+    "bg_end": "#221C3A",
+    "border": "#5B4B86",
+    "panel": "#251F42",
+    "overlay": "#1D1834",
+    "chip_bg": "#30295A",
+    "chip_text": "#E7DFFF",
+    "text": "#F5F1FF",
+    "muted": "#C6B9E8",
+    "accent": "#A78BFA",
+    "accent_2": "#F472B6",
+    "accent_soft": "#3E336E",
+    "track": "#4A3F7F",
+    "pass": "#4ADE80",
+    "warn": "#FBBF24",
+    "fail": "#FB7185"
   }
 }

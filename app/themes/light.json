@@ -1,10 +1,6 @@
 {
   "id": "light",
   "order": 20,
-  "label": {
-    "en": "Light",
-    "ru": "????"
-  },
   "palette": {
     "bg_start": "#FFFFFF",
     "bg_end": "#F6F9FF",

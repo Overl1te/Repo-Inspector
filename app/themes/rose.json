@@ -1,10 +1,6 @@
 {
   "id": "rose",
   "order": 80,
-  "label": {
-    "en": "Rose",
-    "ru": "????"
-  },
   "palette": {
     "bg_start": "#FFF1F5",
     "bg_end": "#FFE4EC",

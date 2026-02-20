@@ -1,10 +1,6 @@
 {
   "id": "amber",
   "order": 90,
-  "label": {
-    "en": "Amber",
-    "ru": "??????"
-  },
   "palette": {
     "bg_start": "#FFF9EB",
     "bg_end": "#FFF0CC",

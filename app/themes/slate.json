@@ -1,26 +1,22 @@
 {
   "id": "slate",
   "order": 120,
-  "label": {
-    "en": "Slate",
-    "ru": "??????"
-  },
   "palette": {
-    "bg_start": "#F1F5F9",
-    "bg_end": "#E2E8F0",
-    "border": "#94A3B8",
-    "panel": "#F8FAFC",
-    "overlay": "#E8EEF6",
-    "chip_bg": "#DBE5F0",
-    "chip_text": "#334155",
-    "text": "#0F172A",
-    "muted": "#475569",
-    "accent": "#0EA5E9",
-    "accent_2": "#3B82F6",
-    "accent_soft": "#BAD0E8",
-    "track": "#D0DBEA",
-    "pass": "#15803D",
-    "warn": "#B45309",
-    "fail": "#B91C1C"
+    "bg_start": "#0F172A",
+    "bg_end": "#16233B",
+    "border": "#334155",
+    "panel": "#1B2A43",
+    "overlay": "#142036",
+    "chip_bg": "#243755",
+    "chip_text": "#DBEAFE",
+    "text": "#F1F5F9",
+    "muted": "#B6C4DA",
+    "accent": "#38BDF8",
+    "accent_2": "#60A5FA",
+    "accent_soft": "#2C4264",
+    "track": "#334A6E",
+    "pass": "#4ADE80",
+    "warn": "#F59E0B",
+    "fail": "#F87171"
   }
 }

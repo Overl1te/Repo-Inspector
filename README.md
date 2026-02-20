@@ -233,3 +233,19 @@ pytest -q
 ## 📄 Лицензия
 
 GNU GPL v3 — см. [LICENSE](LICENSE).
+
+## 🚦 Проверка перед деплоем
+
+Перед выкладкой запустите встроенный pre-deploy чек:
+
+```bash
+python scripts/predeploy_check.py
+```
+
+Строгий режим (включает линтер и тесты):
+
+```bash
+python scripts/predeploy_check.py --strict
+```
+
+Подробный чеклист: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)

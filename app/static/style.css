@@ -279,6 +279,16 @@ button:hover,
   box-shadow: 0 8px 18px rgba(37, 99, 235, 0.32);
 }
 
+button:disabled,
+.button:disabled,
+.button.is-disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .button.secondary {
   background: linear-gradient(130deg, #0284c7, var(--accent));
 }
@@ -304,6 +314,30 @@ button:hover,
 
 .generator-controls label {
   margin-bottom: 0.26rem;
+}
+
+.button-compact {
+  padding: 0.42rem 0.72rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+#gen-svg-only-controls,
+#gen-repo-langs-group,
+#gen-quality-json-controls {
+  display: grid;
+  gap: 0.18rem;
+}
+
+#gen-theme-random {
+  margin-bottom: 0.76rem;
+}
+
+.generator-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+  margin: 0.14rem 0 0.62rem;
 }
 
 .custom-theme-panel {
@@ -389,6 +423,14 @@ button:hover,
   overflow: hidden;
 }
 
+.multi-select.is-disabled {
+  opacity: 0.62;
+}
+
+.multi-select.is-disabled .multi-select-summary {
+  pointer-events: none;
+}
+
 .multi-select-summary {
   cursor: pointer;
   padding: 0.78rem 0.86rem;
@@ -404,7 +446,7 @@ button:hover,
 }
 
 .multi-select-summary::after {
-  content: "▾";
+  content: "\25BE";
   position: absolute;
   right: 0.86rem;
   top: 50%;
@@ -427,6 +469,16 @@ button:hover,
   max-height: 240px;
   overflow: auto;
   padding: 0.62rem 0.8rem 0.76rem;
+}
+
+.multi-select-tools {
+  display: flex;
+  gap: 0.36rem;
+  margin-bottom: 0.22rem;
+}
+
+.multi-select-tools .button {
+  flex: 1;
 }
 
 .multi-select-option {
@@ -1032,6 +1084,51 @@ button:hover,
   background: #f8fafc;
 }
 
+.lines-card .checks {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.lines-card .check-item {
+  align-items: center;
+  gap: 0.72rem;
+  padding: 0.56rem 0.62rem;
+  border: 1px solid #d8e8ff;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #fcfeff, #f3f8ff);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.lines-card .check-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 8px 16px rgba(30, 64, 175, 0.1);
+  transform: translateY(-1px);
+}
+
+.lines-card .check-item:last-child {
+  border-bottom: 1px solid #d8e8ff;
+}
+
+.lines-ext-pill {
+  min-width: 76px;
+  text-align: center;
+  font-family: "JetBrains Mono", monospace;
+  background: #eaf4ff;
+  border-color: #90cdf9;
+  color: #0c4a6e;
+}
+
+.lines-metrics {
+  display: grid;
+  gap: 0.06rem;
+}
+
+.lines-card .check-name {
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
 .hidden {
   display: none !important;
 }
@@ -1103,3 +1200,4 @@ button:hover,
     width: 100%;
   }
 }
+

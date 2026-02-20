@@ -732,16 +732,22 @@ def _language_bars(
         )
 
     total = sum(item[1] for item in languages)
-    chunks = [f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="6" fill="#dbeafe" />']
+    clip_id = f"lang-clip-{x}-{y}-{width}-{height}"
+    chunks = [
+        f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="6" fill="#dbeafe" />',
+        f'<clipPath id="{clip_id}"><rect x="{x}" y="{y}" width="{width}" height="{height}" rx="6" /></clipPath>',
+        f'<g clip-path="url(#{clip_id})">',
+    ]
     cursor = x
     for idx, (_, amount) in enumerate(languages):
         part_width = width - (cursor - x) if idx == len(languages) - 1 else max(int(width * (amount / max(total, 1))), 14)
         cls = "lang-seg" if animated else ""
         delay = 120 + idx * 90
         chunks.append(
-            f'<rect x="{cursor}" y="{y}" width="{part_width}" height="{height}" rx="6" fill="{_bar_color(idx)}" class="{cls}" style="--d:{delay}ms;" />'
+            f'<rect x="{cursor}" y="{y}" width="{part_width}" height="{height}" fill="{_bar_color(idx)}" class="{cls}" style="--d:{delay}ms;" />'
         )
         cursor += part_width
+    chunks.append("</g>")
     return "".join(chunks)
 
 
@@ -760,12 +766,12 @@ def _language_legend(
             f'<text x="{x}" y="{y}" fill="{color}" font-size="11" '
             f'font-family="\'Sora\',Arial,sans-serif">{escape(empty_label)}</text>'
         )
-    total = sum(item[1] for item in languages)
+    percent_points = _language_percent_points(languages)
     parts: list[str] = []
     cursor = x
-    for idx, (name, amount) in enumerate(languages):
-        percent = round((amount / max(total, 1)) * 100)
-        label = f"{escape(name)} {percent}%"
+    for idx, (name, _) in enumerate(languages):
+        percent_label = _format_percent_points(percent_points[idx] if idx < len(percent_points) else 0)
+        label = f"{escape(name)} {percent_label}"
         dot_color = _bar_color(idx)
         dot_cx = cursor + 5
         parts.append(
@@ -781,6 +787,61 @@ def _bar_color(index: int) -> str:
 
     palette = ["#0ea5e9", "#22c55e", "#f59e0b", "#a855f7", "#ec4899", "#6366f1", "#14b8a6"]
     return palette[index % len(palette)]
+
+
+def _language_percent_points(languages: list[tuple[str, int]]) -> list[int]:
+    """Allocate language percentages in 0.1% points with exact 100.0% total."""
+
+    total_amount = sum(max(0, amount) for _, amount in languages)
+    if total_amount <= 0:
+        return [0 for _ in languages]
+
+    total_points = 1000
+    raw_points = [max(0, amount) * total_points / total_amount for _, amount in languages]
+    points = [int(value) for value in raw_points]
+
+    # Ensure every non-zero language remains visible in legend.
+    for idx, (_, amount) in enumerate(languages):
+        if amount > 0 and points[idx] == 0:
+            points[idx] = 1
+
+    current = sum(points)
+    positive_indices = [idx for idx, (_, amount) in enumerate(languages) if amount > 0]
+    if not positive_indices:
+        return [0 for _ in languages]
+
+    if current > total_points:
+        overflow = current - total_points
+        ordered = sorted(positive_indices, key=lambda idx: (points[idx], raw_points[idx]), reverse=True)
+        for idx in ordered:
+            if overflow <= 0:
+                break
+            reducible = max(points[idx] - 1, 0)
+            if reducible <= 0:
+                continue
+            take = min(reducible, overflow)
+            points[idx] -= take
+            overflow -= take
+    elif current < total_points:
+        remaining = total_points - current
+        ordered = sorted(
+            positive_indices,
+            key=lambda idx: (raw_points[idx] - points[idx], raw_points[idx]),
+            reverse=True,
+        )
+        if ordered:
+            for step in range(remaining):
+                points[ordered[step % len(ordered)]] += 1
+    return points
+
+
+def _format_percent_points(points: int) -> str:
+    """Format 0.1% points into human-readable percentage string."""
+
+    safe_points = max(0, int(points))
+    if safe_points % 10 == 0:
+        return f"{safe_points // 10}%"
+    return f"{safe_points / 10:.1f}%"
 
 
 def _clamp_int(value: int, minimum: int, maximum: int) -> int:

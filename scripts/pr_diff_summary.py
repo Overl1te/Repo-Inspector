@@ -10,6 +10,8 @@ from app.config import get_settings
 
 
 def fetch_pr_files(owner: str, repo: str, pr_number: int, token: str) -> list[dict[str, Any]]:
+    """Fetch changed files metadata for a pull request from GitHub API."""
+
     headers = {
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -39,6 +41,8 @@ def fetch_pr_files(owner: str, repo: str, pr_number: int, token: str) -> list[di
 
 
 def render_markdown(files: list[dict[str, Any]]) -> str:
+    """Render compact markdown summary for PR file changes."""
+
     if not files:
         return "### PR Diff\n\nNo changed files detected."
 
@@ -73,12 +77,16 @@ def render_markdown(files: list[dict[str, Any]]) -> str:
 
 
 def _ext(path: str) -> str:
+    """Extract lowercase file extension or fallback marker."""
+
     if "." not in path:
         return "no_ext"
     return path.rsplit(".", 1)[-1].lower()
 
 
 def main() -> None:
+    """CLI entrypoint."""
+
     parser = argparse.ArgumentParser(description="Generate markdown PR diff summary.")
     parser.add_argument("--owner", required=True)
     parser.add_argument("--repo", required=True)

@@ -1,10 +1,6 @@
 {
   "id": "sand",
   "order": 150,
-  "label": {
-    "en": "Sand",
-    "ru": "?????"
-  },
   "palette": {
     "bg_start": "#FFFBF0",
     "bg_end": "#F8EFD8",

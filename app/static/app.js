@@ -16,7 +16,8 @@ const CLIENT_I18N_DEFAULT = {
       failedToLoadJson: "Failed to load JSON",
       privateRepoTokenPrompt:
         "Repository not found. If it is private, provide a GitHub token and try again. Token is not stored.",
-      invalidGeneratorRepoUrl: "Enter a valid GitHub URL like https://github.com/owner/repo",
+      invalidGeneratorRepoUrl:
+        "Enter a valid GitHub URL, stats API URL, or Markdown embed like ![...](https://.../api?...).",
       apiLabelReportJson: "Report JSON",
       apiLabelReportMarkdown: "Report Markdown",
       apiLabelReportText: "Report TXT",
@@ -94,7 +95,110 @@ const GENERATOR_THEME_KEYS = [
   "warn",
   "fail",
 ];
+const GENERATOR_SVG_ONLY_IDS = [
+  "gen-theme",
+  "gen-title",
+  "gen-hide",
+  "gen-width",
+  "gen-animate",
+  "gen-animation",
+  "gen-duration",
+  "gen-cache-seconds",
+];
+const GENERATOR_THEME_PRESETS = {
+  ocean: {
+    bg_start: "#F8FBFF",
+    bg_end: "#EEF5FF",
+    border: "#A8CBFF",
+    panel: "#FFFFFF",
+    overlay: "#EDF4FF",
+    chip_bg: "#E7F0FF",
+    chip_text: "#2D4E83",
+    text: "#14284B",
+    muted: "#3F6191",
+    accent: "#16A4E0",
+    accent_2: "#1AB9A2",
+    accent_soft: "#B8DBFF",
+    track: "#D3E3FB",
+    pass: "#0F7F39",
+    warn: "#B55A0C",
+    fail: "#BE1D2D",
+  },
+  ember: {
+    bg_start: "#2E120C",
+    bg_end: "#431A12",
+    border: "#8C3E2A",
+    panel: "#35160F",
+    overlay: "#2C130D",
+    chip_bg: "#4C2117",
+    chip_text: "#FFD6B7",
+    text: "#FFEDE1",
+    muted: "#E5B79A",
+    accent: "#FF6A3D",
+    accent_2: "#FFB347",
+    accent_soft: "#6B2A1D",
+    track: "#6A2F22",
+    pass: "#58D68D",
+    warn: "#FFC14A",
+    fail: "#FF6E6E",
+  },
+  neon: {
+    bg_start: "#090B1B",
+    bg_end: "#140F2B",
+    border: "#3D2E73",
+    panel: "#130F28",
+    overlay: "#1B1537",
+    chip_bg: "#231B47",
+    chip_text: "#CFFBFF",
+    text: "#F4F6FF",
+    muted: "#B5B9E0",
+    accent: "#28F0E2",
+    accent_2: "#FF4FD8",
+    accent_soft: "#2E2A60",
+    track: "#37346B",
+    pass: "#55F08A",
+    warn: "#FFD65A",
+    fail: "#FF6B9A",
+  },
+  paper: {
+    bg_start: "#FFFDF8",
+    bg_end: "#F4EFE2",
+    border: "#D8CCB1",
+    panel: "#FFF9EE",
+    overlay: "#F2EBDC",
+    chip_bg: "#EADFC8",
+    chip_text: "#5A4631",
+    text: "#2F2518",
+    muted: "#6F5D49",
+    accent: "#8B5E34",
+    accent_2: "#B08952",
+    accent_soft: "#D8C3A3",
+    track: "#D9CFBC",
+    pass: "#2E7D32",
+    warn: "#B26A00",
+    fail: "#B64033",
+  },
+  forest: {
+    bg_start: "#0F2018",
+    bg_end: "#183129",
+    border: "#2D5E4F",
+    panel: "#153027",
+    overlay: "#11251D",
+    chip_bg: "#1E4236",
+    chip_text: "#CFEFDF",
+    text: "#EDFDF4",
+    muted: "#A4C7B8",
+    accent: "#3ECF8E",
+    accent_2: "#80E3C1",
+    accent_soft: "#255145",
+    track: "#2C5044",
+    pass: "#54D98C",
+    warn: "#E3B84F",
+    fail: "#F07F7F",
+  },
+};
 const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+let generatorDefaultPalette = null;
 
 function t(lang, key) {
   const dict = TEXT_I18N[lang] || TEXT_I18N.en;
@@ -393,8 +497,97 @@ function debounce(fn, timeoutMs) {
   };
 }
 
-function parseGeneratorRepoRef(value) {
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, number));
+}
+
+function parseBooleanValue(value, fallback = false) {
+  if (value == null) return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
+function extractGeneratorImportUrl(value) {
   const input = String(value || "").trim();
+  if (!input) return "";
+  const mdAngle = input.match(/!\[[^\]]*]\(\s*<([^>]+)>\s*\)/);
+  if (mdAngle && mdAngle[1]) return mdAngle[1].trim();
+  const mdPlain = input.match(/!\[[^\]]*]\(\s*([^\s)]+)(?:\s+["'][^"']*["'])?\s*\)/);
+  if (mdPlain && mdPlain[1]) return mdPlain[1].trim();
+  return input.replace(/^<|>$/g, "").trim();
+}
+
+function parseGeneratorApiImport(value) {
+  const input = extractGeneratorImportUrl(value);
+  if (!input) return null;
+  let url = null;
+  try {
+    url = new URL(input, window.location.origin);
+  } catch {
+    return null;
+  }
+
+  let owner = "";
+  let repo = "";
+  let kind = "";
+  let format = "";
+
+  const params = url.searchParams;
+  const ownerRaw = params.get("owner");
+  const repoRaw = params.get("repo");
+  if (ownerRaw && repoRaw) {
+    owner = ownerRaw.trim();
+    repo = repoRaw.trim().replace(/\.git$/i, "");
+    kind = String(params.get("kind") || "repo").trim().toLowerCase();
+    format = String(params.get("format") || "svg").trim().toLowerCase();
+  } else {
+    const statsMatch = url.pathname.match(/^\/api\/stats\/(repo|quality)\/([^/]+)\/([^/.]+)\.(svg|json)$/i);
+    if (!statsMatch) return null;
+    kind = statsMatch[1].toLowerCase();
+    owner = decodeURIComponent(statsMatch[2]);
+    repo = decodeURIComponent(statsMatch[3]).replace(/\.git$/i, "");
+    format = statsMatch[4].toLowerCase();
+  }
+
+  if (!owner || !repo) return null;
+  kind = kind === "quality" ? "quality" : "repo";
+  format = format === "json" ? "json" : "svg";
+
+  const parsed = {
+    owner,
+    repo,
+    kind,
+    format,
+    theme: params.get("theme"),
+    locale: params.get("locale"),
+    title: params.get("title"),
+    hide: params.get("hide"),
+    width: params.get("card_width"),
+    langs: params.get("langs_count"),
+    animate: params.get("animate"),
+    animation: params.get("animation"),
+    duration: params.get("duration"),
+    cacheSeconds: params.get("cache_seconds"),
+    includeReport: params.get("include_report"),
+    colors: {},
+  };
+
+  GENERATOR_THEME_KEYS.forEach((key) => {
+    const color = normalizeHexColor(params.get(key) || "");
+    if (color) parsed.colors[key] = color;
+  });
+  return parsed;
+}
+
+function parseGeneratorImport(value) {
+  const apiImport = parseGeneratorApiImport(value);
+  if (apiImport) return apiImport;
+
+  const input = extractGeneratorImportUrl(value);
   if (!input) return null;
 
   const urlMatch = input.match(/^https?:\/\/github\.com\/([^/\s]+)\/([^/\s?#]+)(?:[/?#].*)?$/i);
@@ -433,6 +626,42 @@ function generatorCustomThemeParams() {
   return result;
 }
 
+function generatorPaletteFromInputs() {
+  const palette = {};
+  GENERATOR_THEME_KEYS.forEach((key) => {
+    const node = document.getElementById(`gen-color-${key}`);
+    const value = normalizeHexColor(node?.value || "");
+    if (value) palette[key] = value;
+  });
+  return palette;
+}
+
+function applyGeneratorPalette(palette) {
+  GENERATOR_THEME_KEYS.forEach((key) => {
+    const node = document.getElementById(`gen-color-${key}`);
+    const value = normalizeHexColor(palette?.[key] || "");
+    if (node && value) node.value = value;
+  });
+}
+
+function randomHexColor() {
+  const value = Math.floor(Math.random() * 0xffffff);
+  return `#${value.toString(16).padStart(6, "0").toUpperCase()}`;
+}
+
+function randomGeneratorPalette() {
+  const palette = {};
+  GENERATOR_THEME_KEYS.forEach((key) => {
+    palette[key] = randomHexColor();
+  });
+  return palette;
+}
+
+function captureGeneratorDefaultPalette() {
+  if (generatorDefaultPalette) return;
+  generatorDefaultPalette = generatorPaletteFromInputs();
+}
+
 function syncGeneratorCustomThemeVisibility() {
   const theme = document.getElementById("gen-theme")?.value || "ocean";
   const format = document.getElementById("gen-format")?.value || "svg";
@@ -444,6 +673,12 @@ function syncGeneratorCustomThemeVisibility() {
     const node = document.getElementById(`gen-color-${key}`);
     if (!node) return;
     node.disabled = !show;
+  });
+  ["gen-theme-preset", "gen-apply-preset", "gen-randomize-palette", "gen-reset-palette"].forEach((id) => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.disabled = !show;
+    node.classList.toggle("is-disabled", !show);
   });
 }
 
@@ -467,18 +702,177 @@ function syncGeneratorHideField() {
 
 function syncGeneratorHideOptionsByKind() {
   const kind = document.getElementById("gen-kind")?.value || "repo";
+  const format = document.getElementById("gen-format")?.value || "svg";
+  const isSvg = format === "svg";
   const options = Array.from(document.querySelectorAll(".gen-hide-option"));
   options.forEach((input) => {
     const allowed = String(input.dataset.kinds || "repo,quality")
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
-    const isSupported = allowed.includes(kind);
+    const isSupported = isSvg && allowed.includes(kind);
     input.disabled = !isSupported;
     if (!isSupported) input.checked = false;
     input.closest(".multi-select-option")?.classList.toggle("is-disabled", !isSupported);
   });
+  const panel = document.getElementById("gen-hide-panel");
+  if (panel) {
+    panel.classList.toggle("is-disabled", !isSvg);
+    if (!isSvg) panel.removeAttribute("open");
+  }
   syncGeneratorHideField();
+}
+
+function syncGeneratorControlVisibility() {
+  const kind = document.getElementById("gen-kind")?.value || "repo";
+  const format = document.getElementById("gen-format")?.value || "svg";
+  const isSvg = format === "svg";
+  const isRepo = kind === "repo";
+  const isQualityJson = !isSvg && kind === "quality";
+
+  const svgOnlyRoot = document.getElementById("gen-svg-only-controls");
+  const langsRoot = document.getElementById("gen-repo-langs-group");
+  const qualityJsonRoot = document.getElementById("gen-quality-json-controls");
+  if (svgOnlyRoot) svgOnlyRoot.classList.toggle("hidden", !isSvg);
+  if (langsRoot) langsRoot.classList.toggle("hidden", !isRepo);
+  if (qualityJsonRoot) qualityJsonRoot.classList.toggle("hidden", !isQualityJson);
+
+  GENERATOR_SVG_ONLY_IDS.forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.disabled = !isSvg;
+  });
+  const randomTheme = document.getElementById("gen-theme-random");
+  if (randomTheme) {
+    randomTheme.disabled = !isSvg;
+    randomTheme.classList.toggle("is-disabled", !isSvg);
+  }
+  const includeReport = document.getElementById("gen-include-report");
+  if (includeReport) includeReport.disabled = !isQualityJson;
+  const langs = document.getElementById("gen-langs");
+  if (langs) langs.disabled = !isRepo;
+}
+
+function selectedGeneratorPresetId() {
+  const value = (document.getElementById("gen-theme-preset")?.value || "").trim().toLowerCase();
+  return value in GENERATOR_THEME_PRESETS ? value : "ocean";
+}
+
+function applyGeneratorPresetPalette() {
+  const presetId = selectedGeneratorPresetId();
+  applyGeneratorPalette(GENERATOR_THEME_PRESETS[presetId]);
+}
+
+function resetGeneratorPalette() {
+  captureGeneratorDefaultPalette();
+  applyGeneratorPalette(generatorDefaultPalette || GENERATOR_THEME_PRESETS.ocean);
+}
+
+function randomizeGeneratorPalette() {
+  applyGeneratorPalette(randomGeneratorPalette());
+}
+
+function pickRandomGeneratorTheme() {
+  const themeNode = document.getElementById("gen-theme");
+  if (!themeNode) return;
+  const options = Array.from(themeNode.options)
+    .map((node) => String(node.value || ""))
+    .filter((item) => item && item !== "custom");
+  if (!options.length) return;
+  const next = options[Math.floor(Math.random() * options.length)];
+  themeNode.value = next;
+}
+
+function setGeneratorHideSelection(checked) {
+  document.querySelectorAll(".gen-hide-option:not(:disabled)").forEach((node) => {
+    node.checked = checked;
+  });
+  syncGeneratorHideField();
+}
+
+function applyGeneratorHideFlags(rawValue) {
+  const tokens = new Set(
+    String(rawValue || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  document.querySelectorAll(".gen-hide-option").forEach((node) => {
+    if (node.disabled) {
+      node.checked = false;
+      return;
+    }
+    node.checked = tokens.has(String(node.value || "").trim().toLowerCase());
+  });
+  syncGeneratorHideField();
+}
+
+function applyGeneratorImportToForm(parsed) {
+  const ownerNode = document.getElementById("gen-owner");
+  const repoNode = document.getElementById("gen-repo");
+  const kindNode = document.getElementById("gen-kind");
+  const formatNode = document.getElementById("gen-format");
+  const themeNode = document.getElementById("gen-theme");
+  const localeNode = document.getElementById("gen-locale");
+  const titleNode = document.getElementById("gen-title");
+  const widthNode = document.getElementById("gen-width");
+  const langsNode = document.getElementById("gen-langs");
+  const animateNode = document.getElementById("gen-animate");
+  const animationNode = document.getElementById("gen-animation");
+  const durationNode = document.getElementById("gen-duration");
+  const cacheNode = document.getElementById("gen-cache-seconds");
+  const includeReportNode = document.getElementById("gen-include-report");
+
+  if (ownerNode && parsed.owner) ownerNode.value = parsed.owner;
+  if (repoNode && parsed.repo) repoNode.value = parsed.repo;
+  if (kindNode && parsed.kind) kindNode.value = parsed.kind === "quality" ? "quality" : "repo";
+  if (formatNode && parsed.format) formatNode.value = parsed.format === "json" ? "json" : "svg";
+
+  syncGeneratorControlVisibility();
+  syncGeneratorHideOptionsByKind();
+
+  if (themeNode && parsed.theme) {
+    const theme = String(parsed.theme || "").trim().toLowerCase();
+    if (Array.from(themeNode.options).some((node) => node.value === theme)) {
+      themeNode.value = theme;
+    }
+  }
+  if (localeNode && parsed.locale) {
+    const locale = String(parsed.locale || "").trim().toLowerCase();
+    if (locale === "en" || locale === "ru") localeNode.value = locale;
+  }
+  if (titleNode) titleNode.value = parsed.title ?? "";
+  if (widthNode && parsed.width != null) {
+    widthNode.value = String(clampNumber(parsed.width, 640, 1400, 760));
+  }
+  if (langsNode && parsed.langs != null) {
+    langsNode.value = String(clampNumber(parsed.langs, 1, 30, 4));
+  }
+  if (animateNode && parsed.animate != null) {
+    animateNode.checked = parseBooleanValue(parsed.animate, true);
+  }
+  if (animationNode && parsed.animation) {
+    const mode = String(parsed.animation || "").trim().toLowerCase();
+    if (["all", "soft", "bars", "ring", "none"].includes(mode)) {
+      animationNode.value = mode;
+    }
+  }
+  if (durationNode && parsed.duration != null) {
+    durationNode.value = String(clampNumber(parsed.duration, 350, 7000, 1400));
+  }
+  if (cacheNode && parsed.cacheSeconds != null) {
+    cacheNode.value = String(clampNumber(parsed.cacheSeconds, 0, 86400, 21600));
+  }
+  if (includeReportNode) {
+    includeReportNode.checked = parseBooleanValue(parsed.includeReport, false);
+  }
+
+  applyGeneratorHideFlags(parsed.hide ?? "");
+
+  if (parsed.colors && typeof parsed.colors === "object") {
+    applyGeneratorPalette(parsed.colors);
+  }
+
+  syncGeneratorCustomThemeVisibility();
 }
 
 function buildGeneratorPath() {
@@ -497,6 +891,8 @@ function buildGeneratorPath() {
   const animate = Boolean(document.getElementById("gen-animate")?.checked);
   const animation = document.getElementById("gen-animation")?.value || "all";
   const duration = Number(document.getElementById("gen-duration")?.value || 1400);
+  const cacheSeconds = Number(document.getElementById("gen-cache-seconds")?.value || 21600);
+  const includeReport = Boolean(document.getElementById("gen-include-report")?.checked);
 
   const ownerEnc = encodeURIComponent(owner);
   const repoEnc = encodeURIComponent(repo);
@@ -512,6 +908,7 @@ function buildGeneratorPath() {
     params.set("animate", animate ? "true" : "false");
     params.set("animation", animation);
     params.set("duration", String(Math.max(350, Math.min(7000, duration))));
+    params.set("cache_seconds", String(Math.max(0, Math.min(86400, cacheSeconds))));
     if (kind === "repo") params.set("langs_count", String(Math.max(1, Math.min(10, langs))));
     if (theme === "custom") {
       const custom = generatorCustomThemeParams();
@@ -521,11 +918,61 @@ function buildGeneratorPath() {
     }
   } else if (kind === "repo") {
     params.set("langs_count", String(Math.max(1, Math.min(30, langs))));
+  } else {
+    params.set("locale", locale);
+    if (includeReport) params.set("include_report", "true");
   }
 
   const qs = params.toString();
   if (qs) path += `?${qs}`;
   return path;
+}
+
+function setGeneratorOpenLinkState(node, disabled) {
+  if (!node) return;
+  node.classList.toggle("is-disabled", disabled);
+  if (disabled) {
+    node.setAttribute("aria-disabled", "true");
+    node.setAttribute("tabindex", "-1");
+    node.setAttribute("href", "#");
+    return;
+  }
+  node.removeAttribute("aria-disabled");
+  node.removeAttribute("tabindex");
+}
+
+function setGeneratorButtonState(node, disabled) {
+  if (!node) return;
+  node.disabled = disabled;
+  node.classList.toggle("is-disabled", disabled);
+}
+
+async function copyToClipboard(text) {
+  const value = String(text || "");
+  if (!value) return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Fallback below.
+  }
+  try {
+    const area = document.createElement("textarea");
+    area.value = value;
+    area.setAttribute("readonly", "true");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(area);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 async function refreshGeneratorPreview() {
@@ -536,6 +983,8 @@ async function refreshGeneratorPreview() {
   const jsonNode = document.getElementById("gen-preview-json");
   const svgWrap = document.getElementById("gen-svg-wrap");
   const openNode = document.getElementById("gen-open-url");
+  const copyUrlNode = document.getElementById("gen-copy-url");
+  const copyMdNode = document.getElementById("gen-copy-md");
   const format = document.getElementById("gen-format")?.value || "svg";
   if (!urlNode || !mdNode || !image || !jsonNode || !svgWrap || !openNode) return;
 
@@ -547,23 +996,29 @@ async function refreshGeneratorPreview() {
     jsonNode.classList.add("hidden");
     image.removeAttribute("src");
     jsonNode.textContent = "";
-    openNode.setAttribute("href", "#");
+    setGeneratorOpenLinkState(openNode, true);
+    setGeneratorButtonState(copyUrlNode, true);
+    setGeneratorButtonState(copyMdNode, true);
     return;
   }
 
   const absolute = `${window.location.origin}${path}`;
   urlNode.value = absolute;
   openNode.setAttribute("href", absolute);
+  setGeneratorOpenLinkState(openNode, false);
+  setGeneratorButtonState(copyUrlNode, false);
 
   if (format === "svg") {
     mdNode.value = `![Repo Inspector Card](${absolute})`;
     svgWrap.classList.remove("hidden");
     jsonNode.classList.add("hidden");
-    image.src = `${absolute}${absolute.includes("?") ? "&" : "?"}_ts=${Date.now()}`;
+    image.src = absolute;
+    setGeneratorButtonState(copyMdNode, false);
     return;
   }
 
   mdNode.value = "";
+  setGeneratorButtonState(copyMdNode, true);
   svgWrap.classList.add("hidden");
   jsonNode.classList.remove("hidden");
   try {
@@ -584,6 +1039,22 @@ function initGeneratorPage() {
     "gen-format",
     "gen-theme",
     "gen-locale",
+    "gen-url",
+    "gen-md",
+    "gen-preview-image",
+    "gen-preview-json",
+    "gen-svg-wrap",
+    "gen-open-url",
+  ];
+  if (required.some((id) => !document.getElementById(id))) return;
+
+  const controlIds = [
+    "gen-owner",
+    "gen-repo",
+    "gen-kind",
+    "gen-format",
+    "gen-theme",
+    "gen-locale",
     "gen-title",
     "gen-hide",
     "gen-width",
@@ -591,12 +1062,11 @@ function initGeneratorPage() {
     "gen-animate",
     "gen-animation",
     "gen-duration",
-    "gen-copy-url",
-    "gen-copy-md",
+    "gen-cache-seconds",
+    "gen-include-report",
+    "gen-theme-preset",
   ];
-  if (required.some((id) => !document.getElementById(id))) return;
-
-  const controls = required
+  const controls = controlIds
     .map((id) => document.getElementById(id))
     .filter((node) => node && node.tagName !== "BUTTON");
   const delayedPreview = debounce(() => {
@@ -619,14 +1089,51 @@ function initGeneratorPage() {
     });
   });
   document.getElementById("gen-theme")?.addEventListener("change", () => {
+    syncGeneratorControlVisibility();
+    syncGeneratorHideOptionsByKind();
     syncGeneratorCustomThemeVisibility();
   });
   document.getElementById("gen-format")?.addEventListener("change", () => {
+    syncGeneratorControlVisibility();
+    syncGeneratorHideOptionsByKind();
     syncGeneratorCustomThemeVisibility();
   });
   document.getElementById("gen-kind")?.addEventListener("change", () => {
+    syncGeneratorControlVisibility();
     syncGeneratorHideOptionsByKind();
   });
+
+  document.getElementById("gen-theme-random")?.addEventListener("click", () => {
+    pickRandomGeneratorTheme();
+    syncGeneratorCustomThemeVisibility();
+    delayedPreview();
+  });
+  document.getElementById("gen-apply-preset")?.addEventListener("click", () => {
+    applyGeneratorPresetPalette();
+    delayedPreview();
+  });
+  document.getElementById("gen-randomize-palette")?.addEventListener("click", () => {
+    randomizeGeneratorPalette();
+    delayedPreview();
+  });
+  document.getElementById("gen-reset-palette")?.addEventListener("click", () => {
+    resetGeneratorPalette();
+    delayedPreview();
+  });
+  ["gen-theme-random", "gen-apply-preset", "gen-randomize-palette", "gen-reset-palette"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("click", (event) => {
+      event.preventDefault();
+    });
+  });
+  document.getElementById("gen-hide-select-all")?.addEventListener("click", () => {
+    setGeneratorHideSelection(true);
+    delayedPreview();
+  });
+  document.getElementById("gen-hide-clear")?.addEventListener("click", () => {
+    setGeneratorHideSelection(false);
+    delayedPreview();
+  });
+
   const hidePanel = document.getElementById("gen-hide-panel");
   document.addEventListener("click", (event) => {
     if (!hidePanel) return;
@@ -644,13 +1151,14 @@ function initGeneratorPage() {
   const repoNode = document.getElementById("gen-repo");
 
   const applyRepoImport = () => {
-    const parsed = parseGeneratorRepoRef(importInput?.value || "");
+    const parsed = parseGeneratorImport(importInput?.value || "");
     if (!parsed) {
       if (importError) importError.textContent = t(lang, "invalidGeneratorRepoUrl");
       return;
     }
-    if (ownerNode) ownerNode.value = parsed.owner;
-    if (repoNode) repoNode.value = parsed.repo;
+    applyGeneratorImportToForm(parsed);
+    if (ownerNode && !ownerNode.value && parsed.owner) ownerNode.value = parsed.owner;
+    if (repoNode && !repoNode.value && parsed.repo) repoNode.value = parsed.repo;
     if (importError) importError.textContent = "";
     delayedPreview();
   };
@@ -668,25 +1176,20 @@ function initGeneratorPage() {
   copyUrl?.addEventListener("click", async () => {
     const text = urlNode?.value || "";
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // Ignore clipboard errors for unsupported environments.
-    }
+    await copyToClipboard(text);
   });
 
   copyMd?.addEventListener("click", async () => {
     const text = mdNode?.value || "";
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      // Ignore clipboard errors for unsupported environments.
-    }
+    await copyToClipboard(text);
   });
 
+  captureGeneratorDefaultPalette();
+  syncGeneratorControlVisibility();
   syncGeneratorHideOptionsByKind();
   syncGeneratorCustomThemeVisibility();
+  syncGeneratorHideField();
   void refreshGeneratorPreview();
 }
 

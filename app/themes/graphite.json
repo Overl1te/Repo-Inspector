@@ -1,26 +1,22 @@
 {
   "id": "graphite",
   "order": 60,
-  "label": {
-    "en": "Graphite",
-    "ru": "??????"
-  },
   "palette": {
-    "bg_start": "#F4F5F7",
-    "bg_end": "#E9EDF3",
-    "border": "#B7C1D1",
-    "panel": "#FFFFFF",
-    "overlay": "#EEF1F6",
-    "chip_bg": "#E2E7EF",
-    "chip_text": "#3B4A62",
-    "text": "#1A2535",
-    "muted": "#58677F",
-    "accent": "#2563EB",
-    "accent_2": "#0EA5E9",
-    "accent_soft": "#BFD0EA",
-    "track": "#D7DFEC",
-    "pass": "#15803D",
-    "warn": "#B45309",
-    "fail": "#B91C1C"
+    "bg_start": "#0E1117",
+    "bg_end": "#161B24",
+    "border": "#3A4558",
+    "panel": "#1A2130",
+    "overlay": "#131A26",
+    "chip_bg": "#242E42",
+    "chip_text": "#D2DBEB",
+    "text": "#F3F6FC",
+    "muted": "#A9B4C9",
+    "accent": "#7AA2F7",
+    "accent_2": "#8BD5CA",
+    "accent_soft": "#2A344A",
+    "track": "#34415A",
+    "pass": "#4ADE80",
+    "warn": "#FBBF24",
+    "fail": "#F87171"
   }
 }
