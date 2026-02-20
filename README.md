@@ -42,11 +42,11 @@
 
 ### Quality card
 
-![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=quality&format=svg&theme=midnight&locale=ru&card_width=760&animate=true&animation=all&duration=1400)
+![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=quality&format=svg&theme=graphite&locale=en&card_width=760&animate=true&animation=all&duration=1400&cache_seconds=21600)
 
 ### Repository stats card
 
-![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=repo&format=svg&theme=midnight&locale=ru&card_width=760&animate=true&animation=all&duration=1400&langs_count=4)
+![Repo Inspector Card](https://repo-inspector.vercel.app/api?owner=Overl1te&repo=Repo-Inspector&kind=repo&format=svg&theme=graphite&locale=en&card_width=760&animate=true&animation=all&duration=1400&cache_seconds=21600&langs_count=4)
 
 ### Кастомная тема (пример)
 
