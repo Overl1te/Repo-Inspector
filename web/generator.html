@@ -164,6 +164,61 @@
           <span id="gen-include-report-label">Include detailed report</span>
         </label>
       </div>
+
+      <div id="gen-json-fields-controls" class="hidden">
+        <label id="gen-fields-label" for="gen-fields-panel">Fields (JSON)</label>
+        <details id="gen-fields-panel" class="multi-select">
+          <summary class="multi-select-summary">
+            <span id="gen-fields-summary-text">All</span>
+          </summary>
+          <div class="multi-select-list">
+            <div class="multi-select-tools">
+              <button id="gen-fields-select-all" type="button" class="button secondary button-compact">Select all</button>
+              <button id="gen-fields-clear" type="button" class="button secondary button-compact">Clear</button>
+            </div>
+
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="owner" data-kinds="repo" checked> <code>owner</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="name" data-kinds="repo" checked> <code>name</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="full_name" data-kinds="repo" checked> <code>full_name</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="html_url" data-kinds="repo" checked> <code>html_url</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="description" data-kinds="repo" checked> <code>description</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="stars" data-kinds="repo" checked> <code>stars</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="forks" data-kinds="repo" checked> <code>forks</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="open_issues" data-kinds="repo" checked> <code>open_issues</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="watchers" data-kinds="repo" checked> <code>watchers</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="default_branch" data-kinds="repo" checked> <code>default_branch</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="primary_language" data-kinds="repo" checked> <code>primary_language</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="license_name" data-kinds="repo" checked> <code>license_name</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="topics" data-kinds="repo" checked> <code>topics</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="archived" data-kinds="repo" checked> <code>archived</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="is_fork" data-kinds="repo" checked> <code>is_fork</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="size_kb" data-kinds="repo" checked> <code>size_kb</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="created_at" data-kinds="repo" checked> <code>created_at</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="updated_at" data-kinds="repo" checked> <code>updated_at</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="pushed_at" data-kinds="repo" checked> <code>pushed_at</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="homepage" data-kinds="repo" checked> <code>homepage</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="has_releases" data-kinds="repo" checked> <code>has_releases</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="has_tags" data-kinds="repo" checked> <code>has_tags</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="languages" data-kinds="repo" checked> <code>languages</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="language_total_bytes" data-kinds="repo" checked> <code>language_total_bytes</code></label>
+
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="job_id" data-kinds="quality" checked> <code>job_id</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="commit_sha" data-kinds="quality" checked> <code>commit_sha</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="finished_at" data-kinds="quality" checked> <code>finished_at</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="score_total" data-kinds="quality" checked> <code>score_total</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="report_url" data-kinds="quality" checked> <code>report_url</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="total_code_lines" data-kinds="quality" checked> <code>total_code_lines</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="total_code_files" data-kinds="quality" checked> <code>total_code_files</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="scanned_code_files" data-kinds="quality" checked> <code>scanned_code_files</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="status_counts" data-kinds="quality" checked> <code>status_counts</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="category_scores" data-kinds="quality" checked> <code>category_scores</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="detected_stacks" data-kinds="quality" checked> <code>detected_stacks</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="source" data-kinds="quality" checked> <code>source</code></label>
+            <label class="multi-select-option"><input class="gen-field-option" type="checkbox" value="report" data-kinds="quality" checked> <code>report</code></label>
+          </div>
+        </details>
+        <input id="gen-fields" type="hidden" value="">
+      </div>
     </section>
 
     <section class="card span-8 generator-preview">

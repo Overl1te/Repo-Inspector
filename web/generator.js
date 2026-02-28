@@ -44,6 +44,8 @@ const I18N = {
     duration: "Animation duration (ms)",
     cache: "Cache seconds (SVG)",
     includeReport: "Include full report (quality JSON)",
+    fields: "Fields (JSON)",
+    all: "All",
     palettePreset: "Palette preset",
     presetOcean: "Ocean Breeze",
     presetEmber: "Ember",
@@ -149,6 +151,8 @@ const I18N = {
     duration: "Длительность анимации (мс)",
     cache: "Кэш (сек, SVG)",
     includeReport: "Добавить полный отчет (quality JSON)",
+    fields: "Поля (JSON)",
+    all: "Все",
     palettePreset: "Пресет палитры",
     presetOcean: "Морской бриз",
     presetEmber: "Угли",
@@ -357,6 +361,49 @@ const SVG_ONLY_CONTROL_IDS = [
   "gen-duration",
   "gen-cache-seconds",
 ];
+const JSON_FIELDS = {
+  repo: [
+    "owner",
+    "name",
+    "full_name",
+    "html_url",
+    "description",
+    "stars",
+    "forks",
+    "open_issues",
+    "watchers",
+    "default_branch",
+    "primary_language",
+    "license_name",
+    "topics",
+    "archived",
+    "is_fork",
+    "size_kb",
+    "created_at",
+    "updated_at",
+    "pushed_at",
+    "homepage",
+    "has_releases",
+    "has_tags",
+    "languages",
+    "language_total_bytes",
+  ],
+  quality: [
+    "job_id",
+    "commit_sha",
+    "finished_at",
+    "score_total",
+    "report_url",
+    "total_code_lines",
+    "total_code_files",
+    "scanned_code_files",
+    "status_counts",
+    "category_scores",
+    "detected_stacks",
+    "source",
+    "report",
+  ],
+};
 
 const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const REPO_RE = /^https?:\/\/github\.com\/([^/\s]+)\/([^/\s#]+?)(?:\.git)?\/?$/;
@@ -389,6 +436,7 @@ const refs = {
   duration: document.getElementById("gen-duration"),
   cacheSeconds: document.getElementById("gen-cache-seconds"),
   includeReport: document.getElementById("gen-include-report"),
+  fields: document.getElementById("gen-fields"),
   themePreset: document.getElementById("gen-theme-preset"),
   themeRandom: document.getElementById("gen-theme-random"),
   applyPreset: document.getElementById("gen-apply-preset"),
@@ -399,8 +447,13 @@ const refs = {
   svgControls: document.getElementById("gen-svg-only-controls"),
   repoLangsGroup: document.getElementById("gen-repo-langs-group"),
   qualityJsonControls: document.getElementById("gen-quality-json-controls"),
+  jsonFieldsControls: document.getElementById("gen-json-fields-controls"),
   hidePanel: document.getElementById("gen-hide-panel"),
   hideSummary: document.getElementById("gen-hide-summary-text"),
+  fieldsPanel: document.getElementById("gen-fields-panel"),
+  fieldsSummary: document.getElementById("gen-fields-summary-text"),
+  fieldsSelectAll: document.getElementById("gen-fields-select-all"),
+  fieldsClear: document.getElementById("gen-fields-clear"),
   copyUrl: document.getElementById("gen-copy-url"),
   copyMd: document.getElementById("gen-copy-md"),
   openUrl: document.getElementById("gen-open-url"),
@@ -523,6 +576,7 @@ function parseApiImport(value) {
     duration: params.get("duration"),
     cacheSeconds: params.get("cache_seconds"),
     includeReport: params.get("include_report"),
+    fields: params.get("fields"),
     colors: {},
   };
 
@@ -629,12 +683,14 @@ function syncHideOptions() {
 
 function syncControlVisibility() {
   const isSvg = (refs.format?.value || "svg") === "svg";
+  const isJson = !isSvg;
   const isRepo = (refs.kind?.value || "repo") === "repo";
   const isQualityJson = !isSvg && !isRepo;
 
   refs.svgControls?.classList.toggle("hidden", !isSvg);
   refs.repoLangsGroup?.classList.toggle("hidden", !isRepo);
   refs.qualityJsonControls?.classList.toggle("hidden", !isQualityJson);
+  refs.jsonFieldsControls?.classList.toggle("hidden", !isJson);
 
   SVG_ONLY_CONTROL_IDS.forEach((id) => {
     const node = document.getElementById(id);
@@ -646,6 +702,7 @@ function syncControlVisibility() {
   }
   if (refs.includeReport) refs.includeReport.disabled = !isQualityJson;
   if (refs.langs) refs.langs.disabled = !isRepo;
+  if (refs.fields) refs.fields.disabled = !isJson;
 }
 
 function syncCustomThemePanelVisibility() {
@@ -714,6 +771,7 @@ function buildApiUrl() {
   if (!API_BASE || !refs.owner?.value.trim() || !refs.repo?.value.trim()) return "";
   const format = refs.format?.value || "svg";
   const kind = refs.kind?.value || "repo";
+  const fields = refs.fields?.value.trim() || "";
   const params = new URLSearchParams();
   params.set("owner", refs.owner.value.trim());
   params.set("repo", refs.repo.value.trim());
@@ -740,9 +798,11 @@ function buildApiUrl() {
     }
   } else if (kind === "repo") {
     params.set("langs_count", String(Math.max(1, Math.min(30, Number(refs.langs?.value || 4)))));
+    if (fields) params.set("fields", fields);
   } else {
     params.set("locale", refs.locale?.value || "en");
     if (refs.includeReport?.checked) params.set("include_report", "true");
+    if (fields) params.set("fields", fields);
   }
 
   return `${API_BASE}/api?${params.toString()}`;
@@ -836,6 +896,7 @@ function applyI18n() {
   document.getElementById("gen-duration-label").textContent = t("duration");
   document.getElementById("gen-cache-label").textContent = t("cache");
   document.getElementById("gen-include-report-label").textContent = t("includeReport");
+  document.getElementById("gen-fields-label").textContent = t("fields");
   document.getElementById("gen-preview-title").textContent = t("preview");
   refs.copyUrl.textContent = t("copyUrl");
   refs.copyMd.textContent = t("copyMd");
@@ -851,6 +912,8 @@ function applyI18n() {
   refs.resetPalette.textContent = t("resetPalette");
   refs.hideSelectAll.textContent = t("hideSelectAll");
   refs.hideClear.textContent = t("hideClear");
+  if (refs.fieldsSelectAll) refs.fieldsSelectAll.textContent = t("hideSelectAll");
+  if (refs.fieldsClear) refs.fieldsClear.textContent = t("hideClear");
   document.getElementById("gen-hide-option-description").textContent = t("hide_description");
   document.getElementById("gen-hide-option-languages").textContent = t("hide_languages");
   document.getElementById("gen-hide-option-meta").textContent = t("hide_meta");
@@ -917,6 +980,82 @@ function applyHideFlags(rawValue) {
   syncHideField();
 }
 
+function selectedFieldFlags() {
+  return Array.from(document.querySelectorAll(".gen-field-option:checked:not(:disabled)"))
+    .map((node) => String(node.value || "").trim())
+    .filter(Boolean);
+}
+
+function syncFieldsValue() {
+  if (!refs.fields) return;
+  const kind = refs.kind?.value || "repo";
+  const total = kind === "quality" ? JSON_FIELDS.quality.length : JSON_FIELDS.repo.length;
+  const selected = selectedFieldFlags();
+
+  if (!selected.length) {
+    refs.fields.value = "__none__";
+  } else if (selected.length >= total) {
+    refs.fields.value = "";
+  } else {
+    refs.fields.value = selected.join(",");
+  }
+
+  if (!refs.fieldsSummary) return;
+  if (!selected.length) {
+    refs.fieldsSummary.textContent = t("hideNone");
+  } else if (selected.length >= total) {
+    refs.fieldsSummary.textContent = t("all");
+  } else {
+    refs.fieldsSummary.textContent = selected.join(", ");
+  }
+}
+
+function syncFieldOptions() {
+  const kind = refs.kind?.value || "repo";
+  const isJson = (refs.format?.value || "svg") === "json";
+  Array.from(document.querySelectorAll(".gen-field-option")).forEach((input) => {
+    const allowed = String(input.dataset.kinds || "repo,quality")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const supported = isJson && allowed.includes(kind);
+    input.disabled = !supported;
+    input.closest(".multi-select-option")?.classList.toggle("is-disabled", !supported);
+  });
+  if (refs.fieldsPanel) {
+    refs.fieldsPanel.classList.toggle("is-disabled", !isJson);
+    if (!isJson) refs.fieldsPanel.removeAttribute("open");
+  }
+  syncFieldsValue();
+}
+
+function setFieldSelection(checked) {
+  document.querySelectorAll(".gen-field-option:not(:disabled)").forEach((node) => {
+    node.checked = checked;
+  });
+  syncFieldsValue();
+}
+
+function applyFieldFlags(rawValue) {
+  const selected = new Set(
+    String(rawValue || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const explicitNone = selected.has("__none__") || selected.has("none");
+  const hasSelection = selected.size > 0;
+  document.querySelectorAll(".gen-field-option").forEach((node) => {
+    if (node.disabled) return;
+    if (!hasSelection) {
+      node.checked = true;
+      return;
+    }
+    node.checked = !explicitNone && selected.has(String(node.value || "").trim().toLowerCase());
+  });
+  syncFieldsValue();
+}
+
 function applyImportToForm(parsed) {
   if (parsed.owner) refs.owner.value = parsed.owner;
   if (parsed.repo) refs.repo.value = parsed.repo;
@@ -925,6 +1064,7 @@ function applyImportToForm(parsed) {
 
   syncControlVisibility();
   syncHideOptions();
+  syncFieldOptions();
 
   if (parsed.theme) {
     const theme = String(parsed.theme).trim().toLowerCase();
@@ -946,6 +1086,7 @@ function applyImportToForm(parsed) {
   if (parsed.cacheSeconds != null) refs.cacheSeconds.value = String(clampNumber(parsed.cacheSeconds, 0, 86400, 21600));
   refs.includeReport.checked = parseBooleanValue(parsed.includeReport, false);
   applyHideFlags(parsed.hide ?? "");
+  applyFieldFlags(parsed.fields ?? "");
 
   if (parsed.colors && typeof parsed.colors === "object") {
     applyPalette(parsed.colors);
@@ -970,6 +1111,7 @@ function bindEvents() {
     refs.duration,
     refs.cacheSeconds,
     refs.includeReport,
+    refs.fields,
     refs.themePreset,
   ];
   controls.forEach((node) => {
@@ -988,18 +1130,21 @@ function bindEvents() {
   refs.theme?.addEventListener("change", () => {
     syncControlVisibility();
     syncHideOptions();
+    syncFieldOptions();
     syncCustomThemePanelVisibility();
     void refreshPreview();
   });
   refs.format?.addEventListener("change", () => {
     syncControlVisibility();
     syncHideOptions();
+    syncFieldOptions();
     syncCustomThemePanelVisibility();
     void refreshPreview();
   });
   refs.kind?.addEventListener("change", () => {
     syncControlVisibility();
     syncHideOptions();
+    syncFieldOptions();
     void refreshPreview();
   });
 
@@ -1009,12 +1154,26 @@ function bindEvents() {
       void refreshPreview();
     });
   });
+  document.querySelectorAll(".gen-field-option").forEach((node) => {
+    node.addEventListener("change", () => {
+      syncFieldsValue();
+      void refreshPreview();
+    });
+  });
   refs.hideSelectAll?.addEventListener("click", () => {
     setHideSelection(true);
     void refreshPreview();
   });
   refs.hideClear?.addEventListener("click", () => {
     setHideSelection(false);
+    void refreshPreview();
+  });
+  refs.fieldsSelectAll?.addEventListener("click", () => {
+    setFieldSelection(true);
+    void refreshPreview();
+  });
+  refs.fieldsClear?.addEventListener("click", () => {
+    setFieldSelection(false);
     void refreshPreview();
   });
   refs.themeRandom?.addEventListener("click", () => {
@@ -1084,8 +1243,8 @@ function bindEvents() {
   });
 
   document.addEventListener("click", (event) => {
-    if (!refs.hidePanel) return;
-    if (!refs.hidePanel.contains(event.target)) refs.hidePanel.removeAttribute("open");
+    if (refs.hidePanel && !refs.hidePanel.contains(event.target)) refs.hidePanel.removeAttribute("open");
+    if (refs.fieldsPanel && !refs.fieldsPanel.contains(event.target)) refs.fieldsPanel.removeAttribute("open");
   });
 
   refs.langSwitch?.querySelectorAll(".link").forEach((node) => {
@@ -1097,6 +1256,7 @@ function bindEvents() {
       applyI18n();
       syncControlVisibility();
       syncHideOptions();
+      syncFieldOptions();
       syncCustomThemePanelVisibility();
       void refreshPreview();
     });
@@ -1109,6 +1269,7 @@ captureDefaultPalette();
 applyI18n();
 syncControlVisibility();
 syncHideOptions();
+syncFieldOptions();
 syncCustomThemePanelVisibility();
 bindEvents();
 void refreshPreview();

@@ -462,8 +462,9 @@ async def repo_stats_json(
     return JSONResponse(payload)
 
 
-@app.get("/api/stats/repo/{owner}/{repo}.svg")
+@app.api_route("/api/stats/repo/{owner}/{repo}.svg", methods=["GET", "HEAD"])
 async def repo_stats_svg(
+    request: Request,
     owner: str,
     repo: str,
     theme: str = "ocean",
@@ -493,6 +494,9 @@ async def repo_stats_svg(
     fail: str | None = Query(default=None),
     cache_seconds: int = Query(default=21600, ge=0, le=86400),
 ) -> Response:
+    if request.method == "HEAD":
+        return Response(content=b"", media_type="image/svg+xml", headers=_svg_cache_headers(cache_seconds))
+
     payload = await _build_public_repo_stats_payload(owner, repo, langs_count=max(4, langs_count))
     hidden = _parse_csv_flags(hide)
     custom_theme = _collect_custom_theme(
@@ -532,8 +536,9 @@ async def repo_stats_svg(
     return Response(content=svg, media_type="image/svg+xml", headers=headers)
 
 
-@app.get("/api")
+@app.api_route("/api", methods=["GET", "HEAD"])
 async def readme_stats_api(
+    request: Request,
     owner: str | None = None,
     repo: str | None = None,
     kind: str = Query(default="repo", pattern="^(repo|quality)$"),
@@ -564,6 +569,7 @@ async def readme_stats_api(
     warn: str | None = Query(default=None),
     fail: str | None = Query(default=None),
     cache_seconds: int = Query(default=21600, ge=0, le=86400),
+    fields: str | None = None,
     include_report: bool = False,
     db: Session = Depends(get_db),
 ) -> Response:
@@ -576,6 +582,11 @@ async def readme_stats_api(
 
     if not owner or not repo:
         raise HTTPException(status_code=400, detail="Use query params: owner=<owner>&repo=<repo>")
+
+    if request.method == "HEAD":
+        if format == "svg":
+            return Response(content=b"", media_type="image/svg+xml", headers=_svg_cache_headers(cache_seconds))
+        return Response(content=b"", media_type="application/json")
 
     normalized_locale = normalize_lang(locale)
     hidden = _parse_csv_flags(hide)
@@ -604,8 +615,16 @@ async def readme_stats_api(
         if kind == "quality":
             payload = await _build_quality_stats_payload(owner, repo, db, include_report=include_report)
             payload = _localize_quality_payload(payload, normalized_locale)
+            if fields:
+                quality_raw = payload.get("quality")
+                if isinstance(quality_raw, dict):
+                    payload["quality"] = _select_dict_fields(quality_raw, fields)
         else:
             payload = await _build_public_repo_stats_payload(owner, repo, langs_count=max(1, langs_count))
+            if fields:
+                repository_raw = payload.get("repository")
+                if isinstance(repository_raw, dict):
+                    payload["repository"] = _select_dict_fields(repository_raw, fields)
         return JSONResponse(payload)
 
     if kind == "quality":
@@ -659,8 +678,9 @@ async def quality_stats_json(
     return JSONResponse(payload)
 
 
-@app.get("/api/stats/quality/{owner}/{repo}.svg")
+@app.api_route("/api/stats/quality/{owner}/{repo}.svg", methods=["GET", "HEAD"])
 async def quality_stats_svg(
+    request: Request,
     owner: str,
     repo: str,
     db: Session = Depends(get_db),
@@ -690,6 +710,9 @@ async def quality_stats_svg(
     fail: str | None = Query(default=None),
     cache_seconds: int = Query(default=300, ge=0, le=86400),
 ) -> Response:
+    if request.method == "HEAD":
+        return Response(content=b"", media_type="image/svg+xml", headers=_svg_cache_headers(cache_seconds))
+
     payload = await _build_quality_stats_payload(owner, repo, db, include_report=False)
     hidden = _parse_csv_flags(hide)
     custom_theme = _collect_custom_theme(
@@ -734,8 +757,9 @@ async def legacy_stats_json(owner: str, repo: str, db: Session = Depends(get_db)
     return JSONResponse(payload)
 
 
-@app.get("/api/stats/{owner}/{repo}.svg")
+@app.api_route("/api/stats/{owner}/{repo}.svg", methods=["GET", "HEAD"])
 async def legacy_stats_svg(
+    request: Request,
     owner: str,
     repo: str,
     db: Session = Depends(get_db),
@@ -766,6 +790,9 @@ async def legacy_stats_svg(
     fail: str | None = Query(default=None),
     cache_seconds: int = Query(default=21600, ge=0, le=86400),
 ) -> Response:
+    if request.method == "HEAD":
+        return Response(content=b"", media_type="image/svg+xml", headers=_svg_cache_headers(cache_seconds))
+
     payload = await _build_combined_stats_payload(owner, repo, db)
     hidden = _parse_csv_flags(hide)
     custom_theme = _collect_custom_theme(
@@ -1307,6 +1334,8 @@ def _select_dict_fields(data: dict[str, object], fields: str) -> dict[str, objec
     allowed = _parse_csv_flags(fields)
     if not allowed:
         return data
+    if "__none__" in allowed or "none" in allowed:
+        return {}
     return {key: val for key, val in data.items() if key.lower() in allowed}
 
 

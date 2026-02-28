@@ -13,6 +13,7 @@ const CLIENT_I18N_DEFAULT = {
       trendAria: "Score trend",
       notAvailable: "n/a",
       none: "None",
+      all: "All",
       failedToLoadJson: "Failed to load JSON",
       privateRepoTokenPrompt:
         "Repository not found. If it is private, provide a GitHub token and try again. Token is not stored.",
@@ -41,6 +42,7 @@ const CLIENT_I18N_DEFAULT = {
       trendAria: "Тренд оценки",
       notAvailable: "н/д",
       none: "Ничего",
+      all: "Все",
       failedToLoadJson: "Не удалось загрузить JSON",
       apiLabelReportJson: "Отчет JSON",
       apiLabelReportMarkdown: "Отчет Markdown",
@@ -105,6 +107,49 @@ const GENERATOR_SVG_ONLY_IDS = [
   "gen-duration",
   "gen-cache-seconds",
 ];
+const GENERATOR_JSON_FIELDS = {
+  repo: [
+    "owner",
+    "name",
+    "full_name",
+    "html_url",
+    "description",
+    "stars",
+    "forks",
+    "open_issues",
+    "watchers",
+    "default_branch",
+    "primary_language",
+    "license_name",
+    "topics",
+    "archived",
+    "is_fork",
+    "size_kb",
+    "created_at",
+    "updated_at",
+    "pushed_at",
+    "homepage",
+    "has_releases",
+    "has_tags",
+    "languages",
+    "language_total_bytes",
+  ],
+  quality: [
+    "job_id",
+    "commit_sha",
+    "finished_at",
+    "score_total",
+    "report_url",
+    "total_code_lines",
+    "total_code_files",
+    "scanned_code_files",
+    "status_counts",
+    "category_scores",
+    "detected_stacks",
+    "source",
+    "report",
+  ],
+};
 const GENERATOR_THEME_PRESETS = {
   ocean: {
     bg_start: "#F8FBFF",
@@ -573,6 +618,7 @@ function parseGeneratorApiImport(value) {
     duration: params.get("duration"),
     cacheSeconds: params.get("cache_seconds"),
     includeReport: params.get("include_report"),
+    fields: params.get("fields"),
     colors: {},
   };
 
@@ -727,15 +773,18 @@ function syncGeneratorControlVisibility() {
   const kind = document.getElementById("gen-kind")?.value || "repo";
   const format = document.getElementById("gen-format")?.value || "svg";
   const isSvg = format === "svg";
+  const isJson = !isSvg;
   const isRepo = kind === "repo";
   const isQualityJson = !isSvg && kind === "quality";
 
   const svgOnlyRoot = document.getElementById("gen-svg-only-controls");
   const langsRoot = document.getElementById("gen-repo-langs-group");
   const qualityJsonRoot = document.getElementById("gen-quality-json-controls");
+  const jsonFieldsRoot = document.getElementById("gen-json-fields-controls");
   if (svgOnlyRoot) svgOnlyRoot.classList.toggle("hidden", !isSvg);
   if (langsRoot) langsRoot.classList.toggle("hidden", !isRepo);
   if (qualityJsonRoot) qualityJsonRoot.classList.toggle("hidden", !isQualityJson);
+  if (jsonFieldsRoot) jsonFieldsRoot.classList.toggle("hidden", !isJson);
 
   GENERATOR_SVG_ONLY_IDS.forEach((id) => {
     const node = document.getElementById(id);
@@ -750,6 +799,8 @@ function syncGeneratorControlVisibility() {
   if (includeReport) includeReport.disabled = !isQualityJson;
   const langs = document.getElementById("gen-langs");
   if (langs) langs.disabled = !isRepo;
+  const fields = document.getElementById("gen-fields");
+  if (fields) fields.disabled = !isJson;
 }
 
 function selectedGeneratorPresetId() {
@@ -806,6 +857,93 @@ function applyGeneratorHideFlags(rawValue) {
   syncGeneratorHideField();
 }
 
+function selectedGeneratorFieldFlags() {
+  return Array.from(document.querySelectorAll(".gen-field-option:checked:not(:disabled)"))
+    .map((node) => String(node.value || "").trim())
+    .filter(Boolean);
+}
+
+function syncGeneratorFieldsField() {
+  const hiddenInput = document.getElementById("gen-fields");
+  const summaryNode = document.getElementById("gen-fields-summary-text");
+  const lang = document.body.dataset.lang || "en";
+  if (!hiddenInput) return;
+
+  const kind = document.getElementById("gen-kind")?.value || "repo";
+  const total = kind === "quality" ? GENERATOR_JSON_FIELDS.quality.length : GENERATOR_JSON_FIELDS.repo.length;
+  const selected = selectedGeneratorFieldFlags();
+
+  if (!selected.length) {
+    hiddenInput.value = "__none__";
+  } else if (selected.length >= total) {
+    hiddenInput.value = "";
+  } else {
+    hiddenInput.value = selected.join(",");
+  }
+
+  if (summaryNode) {
+    if (!selected.length) {
+      summaryNode.textContent = t(lang, "none");
+    } else if (selected.length >= total) {
+      summaryNode.textContent = t(lang, "all");
+    } else {
+      summaryNode.textContent = selected.join(", ");
+    }
+  }
+}
+
+function syncGeneratorFieldOptionsByKind() {
+  const kind = document.getElementById("gen-kind")?.value || "repo";
+  const format = document.getElementById("gen-format")?.value || "svg";
+  const isJson = format === "json";
+  const options = Array.from(document.querySelectorAll(".gen-field-option"));
+
+  options.forEach((input) => {
+    const allowed = String(input.dataset.kinds || "repo,quality")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const isSupported = isJson && allowed.includes(kind);
+    input.disabled = !isSupported;
+    input.closest(".multi-select-option")?.classList.toggle("is-disabled", !isSupported);
+  });
+
+  const panel = document.getElementById("gen-fields-panel");
+  if (panel) {
+    panel.classList.toggle("is-disabled", !isJson);
+    if (!isJson) panel.removeAttribute("open");
+  }
+  syncGeneratorFieldsField();
+}
+
+function setGeneratorFieldSelection(checked) {
+  document.querySelectorAll(".gen-field-option:not(:disabled)").forEach((node) => {
+    node.checked = checked;
+  });
+  syncGeneratorFieldsField();
+}
+
+function applyGeneratorFieldFlags(rawValue) {
+  const tokens = new Set(
+    String(rawValue || "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const explicitNone = tokens.has("__none__") || tokens.has("none");
+  const hasExplicitSelection = tokens.size > 0;
+
+  document.querySelectorAll(".gen-field-option").forEach((node) => {
+    if (node.disabled) return;
+    if (!hasExplicitSelection) {
+      node.checked = true;
+      return;
+    }
+    node.checked = !explicitNone && tokens.has(String(node.value || "").trim().toLowerCase());
+  });
+  syncGeneratorFieldsField();
+}
+
 function applyGeneratorImportToForm(parsed) {
   const ownerNode = document.getElementById("gen-owner");
   const repoNode = document.getElementById("gen-repo");
@@ -829,6 +967,7 @@ function applyGeneratorImportToForm(parsed) {
 
   syncGeneratorControlVisibility();
   syncGeneratorHideOptionsByKind();
+  syncGeneratorFieldOptionsByKind();
 
   if (themeNode && parsed.theme) {
     const theme = String(parsed.theme || "").trim().toLowerCase();
@@ -867,6 +1006,7 @@ function applyGeneratorImportToForm(parsed) {
   }
 
   applyGeneratorHideFlags(parsed.hide ?? "");
+  applyGeneratorFieldFlags(parsed.fields ?? "");
 
   if (parsed.colors && typeof parsed.colors === "object") {
     applyGeneratorPalette(parsed.colors);
@@ -893,6 +1033,7 @@ function buildGeneratorPath() {
   const duration = Number(document.getElementById("gen-duration")?.value || 1400);
   const cacheSeconds = Number(document.getElementById("gen-cache-seconds")?.value || 21600);
   const includeReport = Boolean(document.getElementById("gen-include-report")?.checked);
+  const fields = (document.getElementById("gen-fields")?.value || "").trim();
 
   const ownerEnc = encodeURIComponent(owner);
   const repoEnc = encodeURIComponent(repo);
@@ -918,9 +1059,11 @@ function buildGeneratorPath() {
     }
   } else if (kind === "repo") {
     params.set("langs_count", String(Math.max(1, Math.min(30, langs))));
+    if (fields) params.set("fields", fields);
   } else {
     params.set("locale", locale);
     if (includeReport) params.set("include_report", "true");
+    if (fields) params.set("fields", fields);
   }
 
   const qs = params.toString();
@@ -1057,6 +1200,7 @@ function initGeneratorPage() {
     "gen-locale",
     "gen-title",
     "gen-hide",
+    "gen-fields",
     "gen-width",
     "gen-langs",
     "gen-animate",
@@ -1088,19 +1232,28 @@ function initGeneratorPage() {
       delayedPreview();
     });
   });
+  document.querySelectorAll(".gen-field-option").forEach((node) => {
+    node.addEventListener("change", () => {
+      syncGeneratorFieldsField();
+      delayedPreview();
+    });
+  });
   document.getElementById("gen-theme")?.addEventListener("change", () => {
     syncGeneratorControlVisibility();
     syncGeneratorHideOptionsByKind();
+    syncGeneratorFieldOptionsByKind();
     syncGeneratorCustomThemeVisibility();
   });
   document.getElementById("gen-format")?.addEventListener("change", () => {
     syncGeneratorControlVisibility();
     syncGeneratorHideOptionsByKind();
+    syncGeneratorFieldOptionsByKind();
     syncGeneratorCustomThemeVisibility();
   });
   document.getElementById("gen-kind")?.addEventListener("change", () => {
     syncGeneratorControlVisibility();
     syncGeneratorHideOptionsByKind();
+    syncGeneratorFieldOptionsByKind();
   });
 
   document.getElementById("gen-theme-random")?.addEventListener("click", () => {
@@ -1133,11 +1286,20 @@ function initGeneratorPage() {
     setGeneratorHideSelection(false);
     delayedPreview();
   });
+  document.getElementById("gen-fields-select-all")?.addEventListener("click", () => {
+    setGeneratorFieldSelection(true);
+    delayedPreview();
+  });
+  document.getElementById("gen-fields-clear")?.addEventListener("click", () => {
+    setGeneratorFieldSelection(false);
+    delayedPreview();
+  });
 
   const hidePanel = document.getElementById("gen-hide-panel");
+  const fieldsPanel = document.getElementById("gen-fields-panel");
   document.addEventListener("click", (event) => {
-    if (!hidePanel) return;
-    if (!hidePanel.contains(event.target)) hidePanel.removeAttribute("open");
+    if (hidePanel && !hidePanel.contains(event.target)) hidePanel.removeAttribute("open");
+    if (fieldsPanel && !fieldsPanel.contains(event.target)) fieldsPanel.removeAttribute("open");
   });
 
   const copyUrl = document.getElementById("gen-copy-url");
@@ -1188,8 +1350,10 @@ function initGeneratorPage() {
   captureGeneratorDefaultPalette();
   syncGeneratorControlVisibility();
   syncGeneratorHideOptionsByKind();
+  syncGeneratorFieldOptionsByKind();
   syncGeneratorCustomThemeVisibility();
   syncGeneratorHideField();
+  syncGeneratorFieldsField();
   void refreshGeneratorPreview();
 }
 
